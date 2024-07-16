@@ -19,7 +19,8 @@ Welcome to Ares Breach 1.0, a gamemode meticulously developed over the span of t
 - **Download the latest [release](https://github.com/Spac3e/ares-breach/releases) from the repository.**
 - **Setup your server and connect workshop content.** 
    - Note: It won't work with p2p.
--. **Configure your database:**
+   
+- **Configure your database:**
    - Edit the files in `breach/other`:
      - `sv_database.lua`
      - `sv_lastvisit.lua`
