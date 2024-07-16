@@ -1,0 +1,147 @@
+"breach"
+{
+	"base"		"base"
+	"title"		"Breach"
+	"maps"		"gm_site19"
+	"menusystem"	"1"
+	
+	"settings"
+	{
+		1
+		{
+			"name"		"br_time_preparing"
+			"text"		"Time - Preparing"
+			"type"		"Numeric"
+			"default"	"60"
+		}
+		
+		2
+		{
+			"name"		"br_time_round"
+			"text"		"Time - Round"
+			"type"		"Numeric"
+			"default"	"780"
+		}
+		
+		3
+		{
+			"name"		"br_time_postround"
+			"text"		"Time - Postround"
+			"type"		"Numeric"
+			"default"	"30"
+		}
+		
+		4
+		{
+			"name"		"br_time_ntfenter"
+			"text"		"Time - NTF Enter"
+			"type"		"Numeric"
+			"default"	"360"
+		}
+		
+		5
+		{
+			"name"		"br_time_blink"
+			"text"		"Time - Blink"
+			"type"		"Numeric"
+			"default"	"0.25"
+		}
+		
+		6
+		{
+			"name"		"br_time_blinkdelay"
+			"text"		"Time - Blink Delay"
+			"type"		"Numeric"
+			"default"	"5"
+		}
+		
+		7
+		{
+			"name"		"br_spawn_level4"
+			"text"		"Spawn Level4 Keycards"
+			"type"		"Numeric"
+			"default"	"2"
+		}
+		
+		8
+		{
+			"name"		"br_specialround_percentage"
+			"text"		"Special Round Percentage"
+			"type"		"Numeric"
+			"default"	"15"
+		}
+		
+		9
+		{
+			"name"		"br_specialround_forcenext"
+			"text"		"Force Special Round"
+			"type"		"Numeric"
+			"default"	"none"
+		}
+
+		10
+		{
+			"name"		"br_spawnzombies"
+			"text"		"Spawn Zombies"
+			"type"		"CheckBox"
+			"default"	"0"
+		}
+
+		11
+		{
+			"name"		"br_karma"
+			"text"		"Enable Karma"
+			"type"		"CheckBox"
+			"default"	"1"
+		}
+
+		12
+		{
+			"name"		"br_karma_max"
+			"text"		"Max Karma"
+			"type"		"Numeric"
+			"default"	"1200"
+		}
+
+		13
+		{
+			"name"		"br_karma_starting"
+			"text"		"Starting Karma"
+			"type"		"Numeric"
+			"default"	"1000"
+		}
+
+		14
+		{
+			"name"		"br_karma_save"
+			"text"		"Save Karma"
+			"type"		"CheckBox"
+			"default"	"1"
+		}
+
+		15
+		{
+			"name"		"br_karma_round"
+			"text"		"Round Karma"
+			"type"		"Numeric"
+			"default"	"120"
+		}
+
+		16
+		{
+			"name"		"br_karma_reduce"
+			"text"		"Damage Karma"
+			"type"		"Numeric"
+			"default"	"30"
+		}
+
+		17
+		{
+			"name"		"br_scoreboardranks"
+			"text"		"Scoreboard Ranks"
+			"type"		"CheckBox"
+			"default"	"0"
+		}
+		
+	}
+}
