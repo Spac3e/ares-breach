@@ -21,7 +21,7 @@ Welcome to Ares Breach 1.0, a gamemode meticulously developed over the span of t
    - Note: It won't work with p2p.
    
 - **Configure your database:**
-   - Edit the files in `breach/other`:
+   - Edit the files in `coore/modules/breach_other`:
      - `sv_database.lua`
      - `sv_lastvisit.lua`
      - `sv_premium.lua`
