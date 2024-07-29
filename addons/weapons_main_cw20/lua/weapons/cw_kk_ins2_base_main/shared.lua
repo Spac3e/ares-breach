@@ -75,6 +75,10 @@ if CLIENT then
 	-- include("o_cl_pvmm.lua")
 end
 
+if SERVER then
+	util.AddNetworkString("CW_KK_INS2_PREPAREFORPICKUP")
+end
+
 SWEP.Base = "cw_base"
 SWEP.Category = "CW 2.0 KK INS2"
 
@@ -450,7 +454,8 @@ SWEP._KK_INS2_PickedUp = !SP
 local prefix, suffix
 
 function SWEP:PrepareForPickup(drop)
-self.CW_KK_HANDS_MDL = "models/weapons/v_cw_kk_ins2_hands_css.mdl"
+	self.CW_KK_HANDS_MDL = "models/weapons/v_cw_kk_ins2_hands_css.mdl"
+	
 	if not CustomizableWeaponry_KK.ins2.firstDeployEnabled then
 		if CLIENT then
 			self:drawAnimFunc()
@@ -482,20 +487,20 @@ self.CW_KK_HANDS_MDL = "models/weapons/v_cw_kk_ins2_hands_css.mdl"
 
 	if SERVER then
 		self.dt.INS2GLActive = false
-
-		umsg.Start("CW_KK_INS2_PREPAREFORPICKUP")
-			umsg.Entity(self)
-		umsg.End()
+	
+		net.Start("CW_KK_INS2_PREPAREFORPICKUP")
+			net.WriteEntity(self)
+		net.Broadcast()
 	end
-end
+end	
 
 //-----------------------------------------------------------------------------
 // CW_KK_INS2_PREPAREFORPICKUP message calls PrepareForPickup on client
 //-----------------------------------------------------------------------------
 
 if CLIENT then
-	usermessage.Hook("CW_KK_INS2_PREPAREFORPICKUP", function(um)
-		local wep = um:ReadEntity()
+	net.Receive("CW_KK_INS2_PREPAREFORPICKUP", function(len)
+		local wep = net.ReadEntity()
 
 		if IsValid(wep) and wep.PrepareForPickup then
 			wep:PrepareForPickup()
