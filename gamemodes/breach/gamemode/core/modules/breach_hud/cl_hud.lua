@@ -773,7 +773,7 @@ hook.Add( "CalcView", "firstpersondeathkk", function( ply, origin, angles, fov )
 
 	local view = {}
 
-  if ( !head || !head.Pos ) then return end
+	if ( !head || !head.Pos ) then return end
 
 	if ( !ragdoll.BonesRattled ) then
 
@@ -782,6 +782,8 @@ hook.Add( "CalcView", "firstpersondeathkk", function( ply, origin, angles, fov )
 	  ragdoll:SetupBones()
 	  local matrix
 
+	  -- Breaks bonemerge bone 'head' position, overall - not soo needed, does nothing.
+	  --[[
 	  for bone = 0, ( ragdoll:GetBoneCount() || 1 ) do
 
 	    if ragdoll:GetBoneName( bone ):lower():find( "head" ) then
@@ -794,6 +796,7 @@ hook.Add( "CalcView", "firstpersondeathkk", function( ply, origin, angles, fov )
 	    end
 
 	  end
+	  --]]
 
 	  if ( IsValid( matrix ) ) then
 
@@ -808,7 +811,6 @@ hook.Add( "CalcView", "firstpersondeathkk", function( ply, origin, angles, fov )
   	view.drawviewer = true
 
 	return view
-
 end )
 
 local Death_Anims = {
