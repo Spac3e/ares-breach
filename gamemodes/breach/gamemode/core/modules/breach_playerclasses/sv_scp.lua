@@ -261,7 +261,7 @@ setmetatable( ObjectSCP, { __call = ObjectSCP.Create } )
 timer.Simple(0, function()
 	RegisterSCPList()
 	SetupForceSCP()
-	for k, v in player.Iterator() do
+	for k, v in ipairs(player.GetAll()) do
 		SendSCPList( v )
 	end
 	if not (scpsready or nil) then
