@@ -92,7 +92,7 @@ function SWEP:PrimaryAttack( right )
 
 			end
 
-			self.Owner:EmitSound("rxsend_april_event/fanny/fun"..math.random(1,35)..".ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
+			self.Owner:EmitSound("april_event/fanny/fun"..math.random(1,35)..".ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
 
 			self.Owner:SetForcedAnimation('0_gangnam', math.huge, function()
 				self.Owner:SetNWAngle("ViewAngles", self.Owner:GetAngles())

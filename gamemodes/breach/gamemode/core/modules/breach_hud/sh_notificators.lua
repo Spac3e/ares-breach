@@ -133,7 +133,7 @@ if CLIENT then
 		chat.AddText(Color(230, 0, 0), "[Ares Breach] ", Color(255, 255, 255), unpack(msg))
 	end
 	
-	function RXSENDWarning(message)
+	function AresWarning(message)
 	if message == nil then return end
 	
 	if isstring(message) then message = {message} end
@@ -199,7 +199,7 @@ if CLIENT then
 	
 	util.AddNetworkString("BreachWarningFromServer")
 	
-	function mply:RXSENDWarning(message)
+	function mply:AresWarning(message)
 		net.Start("BreachWarningFromServer")
 		net.WriteString(tostring(message))
 		net.Send(self)
