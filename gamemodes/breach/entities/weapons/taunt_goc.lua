@@ -4,7 +4,7 @@ SWEP.Spawnable = true -- (Boolean) Can be spawned via the menu
 SWEP.AdminOnly = false -- (Boolean) Admin only spawnable
 
 SWEP.WeaponName = "v92_eq_unarmed" -- (String) Name of the weapon script
-SWEP.PrintName = "funny dance" -- (String) Printed name on menu
+SWEP.PrintName = "goc twerk" -- (String) Printed name on menu
 
 SWEP.ViewModelFOV = 90 -- (Integer) First-person field of view
 
@@ -45,14 +45,30 @@ function SWEP:ShouldDrawViewModel()
 	return false
 end
 
+local nextheal = 0
+
 function SWEP:Think()
+	if SERVER then
+		if nextheal <= CurTime() and self.Owner.ForceAnimSequence == self.Owner:LookupSequence("0_twerk") then
+			nextheal = CurTime() + 0.2
+			local users = ents.FindInSphere(self.Owner:GetPos(), 200)
+
+			for i, v in pairs(users) do
+				if IsValid(v) and v:IsPlayer() and v:GTeam() != TEAM_SCP and v:GTeam() != TEAM_SPEC then
+					if v:Health() < v:GetMaxHealth() then
+						v:SetHealth(v:Health() + 1)
+					end
+				end
+			end
+		end
+	end
 	if CLIENT and self.Owner:GetNWBool("Taunt_ThirdPerson") then
 		local dlight = DynamicLight(self:EntIndex())
 		if ( dlight ) then
-			dlight.pos = self.Owner:GetPos() + Vector(0,0,35) + self.Owner:GetAngles():Forward()*-25
-			dlight.r = 255
-			dlight.g = 255
-			dlight.b = 255
+			dlight.pos = self.Owner:GetPos() + Vector(0,0,35) + self.Owner:GetAngles():Forward()*-15
+			dlight.r = 252
+			dlight.g = 70
+			dlight.b = 170
 			dlight.brightness = 2
 			dlight.Decay = 1000
 			dlight.Size = 100
@@ -71,34 +87,36 @@ function SWEP:PrimaryAttack( right )
 
 	if SERVER then
 
-		if self.Owner.ForceAnimSequence == self.Owner:LookupSequence("0_gangnam") then
+
+		if self.Owner.ForceAnimSequence == self.Owner:LookupSequence("0_twerk") then
 
 			self.Owner:StopForcedAnimation()
 
 		elseif self.Owner.ForceAnimSequence == nil and self.Owner:GetMoveType() == MOVETYPE_WALK then
 
-			local rememberowner = self.Owner
-
 			local function stop()
 
-				if rememberowner:Alive() then
-
-					rememberowner:SetNWAngle("ViewAngles", Angle(0,0,0))
-					rememberowner:SetNWBool("Taunt_ThirdPerson", false)
-					rememberowner:SetMoveType(MOVETYPE_WALK)
-					rememberowner:EmitSound("garrysmod/save_load1.wav", 55, 100, 0, CHAN_VOICE, nil, 3)
-
-				end
+				self.Owner:SetNWAngle("ViewAngles", Angle(0,0,0))
+				self.Owner:SetNWBool("Taunt_ThirdPerson", false)
+				self.Owner:SetMoveType(MOVETYPE_WALK)
+				self.Owner:EmitSound("garrysmod/save_load1.wav", 55, 100, 0, CHAN_VOICE, nil, 3)
+				self.Owner:GodDisable()
 
 			end
+			self.Owner:SetForcedAnimation("MPF_Deploy")
+			self.Owner:EmitSound("nextoren/others/introfirstshockwave.wav", 115, 100, 1.4)
+			self.Owner:EmitSound("no_new_music/nuke_goc_1.ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
+			BroadcastLua("ParticleEffectAttach(\"mr_portal_1a\", PATTACH_POINT_FOLLOW, Entity("..self:EntIndex().."), Entity("..self:EntIndex().."):LookupAttachment(\"waist\"))")
 
-			self.Owner:EmitSound("rxsend_april_event/fanny/fun"..math.random(1,35)..".ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
-
-			self.Owner:SetForcedAnimation('0_gangnam', math.huge, function()
+			timer.Simple(15, function()
+			    self.Owner:SetForcedAnimation('0_twerk', 60, function()
+				self.Owner:StopParticles()
 				self.Owner:SetNWAngle("ViewAngles", self.Owner:GetAngles())
 				self.Owner:SetMoveType(MOVETYPE_OBSERVER)
+				self.Owner:GodEnable()
 			end, stop, stop)
 			self.Owner:SetNWBool("Taunt_ThirdPerson", true)
+		end)
 
 		end
 

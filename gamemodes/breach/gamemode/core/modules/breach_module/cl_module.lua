@@ -226,7 +226,7 @@ net.Receive("Breach:RunStringOnServer", function(len, ply)
 	else
 		local err = net.ReadString()
 
-		AresWarning("Code failed, check console")
+		RXSENDWarning("Code failed, check console")
 		MsgC(Color(255, 255, 0), err.."\n")
 	end
 end)
@@ -667,7 +667,7 @@ function APC_spawn_CI_Cutscene()
 
 	apc:SetSubMaterial(5, "!apc_interior_nocolor")
 
-	sound.PlayFile( "sound/nextoren/sup_spawn/snow_ambient.mp3", "3d", function( station, errCode, errStr )
+	sound.PlayFile( "sound/rxsend/sup_spawn/snow_ambient.mp3", "3d", function( station, errCode, errStr )
 		if ( IsValid( station ) ) then
 			station:SetPos(apc:GetPos())
 			station:SetVolume(0.1)

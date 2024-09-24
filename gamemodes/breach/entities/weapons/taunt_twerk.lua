@@ -104,7 +104,7 @@ function SWEP:PrimaryAttack( right )
 
 			end
 
-			self.Owner:EmitSound("april_event/sexydance.ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
+			self.Owner:EmitSound("rxsend_april_event/sexydance.ogg", 55, 100, 1, CHAN_VOICE, nil, 1)
 
 			self.Owner:SetForcedAnimation('0_twerk', 60, function()
 				self.Owner:SetNWAngle("ViewAngles", self.Owner:GetAngles())

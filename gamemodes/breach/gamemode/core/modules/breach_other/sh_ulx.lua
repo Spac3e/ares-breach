@@ -412,14 +412,14 @@ function ulx.getgaginfo( ply, s64 )
 
 	local steamid = util.SteamIDFrom64(s64)
 
-	if !util.GetPData(steamid, "AresGagged", false) then
+	if !util.GetPData(steamid, "RXSEND_Gagged", false) then
 		ply:AresNotify("l:ulx_not_gagged")
 		return
 	end
 
-	local admin = util.GetPData(steamid, "AresGaggedAdmin", "ERROR")
-	local reason = util.GetPData(steamid, "AresGaggedReason", "ERROR")
-	local unmute = tonumber(util.GetPData(steamid, "AresGaggedTime", "0"))
+	local admin = util.GetPData(steamid, "RXSEND_GaggedAdmin", "ERROR")
+	local reason = util.GetPData(steamid, "RXSEND_GaggedReason", "ERROR")
+	local unmute = tonumber(util.GetPData(steamid, "RXSEND_GaggedTime", "0"))
 
 	local unmutetext = "l:ulx_never"
 
@@ -442,14 +442,14 @@ function ulx.getmuteinfo( ply, s64 )
 
 	local steamid = util.SteamIDFrom64(s64)
 
-	if !util.GetPData(steamid, "AresMute", false) then
+	if !util.GetPData(steamid, "RXSEND_Muted", false) then
 		ply:AresNotify("l:ulx_not_muted")
 		return
 	end
 
-	local admin = util.GetPData(steamid, "AresMuteAdmin", "ERROR")
-	local reason = util.GetPData(steamid, "AresMuteReason", "ERROR")
-	local unmute = tonumber(util.GetPData(steamid, "AresMuteTime", "0"))
+	local admin = util.GetPData(steamid, "RXSEND_MutedAdmin", "ERROR")
+	local reason = util.GetPData(steamid, "RXSEND_MutedReason", "ERROR")
+	local unmute = tonumber(util.GetPData(steamid, "RXSEND_MutedTime", "0"))
 
 	local unmutetext = "l:ulx_never"
 
@@ -607,11 +607,11 @@ function ulx.mute( call_ply, ply, time, reason )
 
 	if time == 0 then datafloat = 0 end
 
-	ply:SetPData("AresMuteTime", datafloat)
-	ply:SetPData("AresMute", true)
+	ply:SetPData("RXSEND_MutedTime", datafloat)
+	ply:SetPData("RXSEND_Muted", true)
 
-	ply:SetPData("AresMuteAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
-	ply:SetPData("AresMuteReason", reason)
+	ply:SetPData("RXSEND_MutedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
+	ply:SetPData("RXSEND_MutedReason", reason)
 
 	ply:SetNWBool("ulx_muted", true)
 
@@ -662,12 +662,12 @@ function ulx.gag( call_ply, ply, time, reason )
 
 	if time == 0 then datafloat = 0 end
 
-	ply:SetPData("AresGaggedTime", datafloat)
-	ply:SetPData("AresGagged", true)
+	ply:SetPData("RXSEND_GaggedTime", datafloat)
+	ply:SetPData("RXSEND_Gagged", true)
 	ply:SetNWBool("ulx_gagged", true)
 
-	ply:SetPData("AresGaggedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
-	ply:SetPData("AresGaggedReason", reason)
+	ply:SetPData("RXSEND_GaggedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
+	ply:SetPData("RXSEND_GaggedReason", reason)
 
 	SendSpecMessage(ply, "l:ulx_player ", Color(255,0,0), "\""..ply:Name().."\"",Color(255,255,255), unpack(mutetext))
 	ply:AresNotify(Color(255,0,0), ply:Name().."l:ulx_you", Color(255,255,255), unpack(mutetext))
@@ -796,11 +796,11 @@ function ulx.muteid(call_ply, steamid64, time, reason)
 		datafloat = os.time() + time
 	end
 
-	util.SetPData(steamid, "AresMuteTime", datafloat)
-	util.SetPData(steamid, "AresMute", true)
+	util.SetPData(steamid, "RXSEND_MutedTime", datafloat)
+	util.SetPData(steamid, "RXSEND_Muted", true)
 
-	util.SetPData(steamid, "AresMuteAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
-	util.SetPData(steamid, "AresMuteReason", reason)
+	util.SetPData(steamid, "RXSEND_MutedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
+	util.SetPData(steamid, "RXSEND_MutedReason", reason)
 
 	local timestring = string.NiceTime(time)
 
@@ -909,11 +909,11 @@ function ulx.gagid(call_ply, steamid64, time, reason)
 		datafloat = os.time() + time
 	end
 
-	util.SetPData(steamid, "AresGaggedTime", datafloat)
-	util.SetPData(steamid, "AresGagged", true)
+	util.SetPData(steamid, "RXSEND_GaggedTime", datafloat)
+	util.SetPData(steamid, "RXSEND_Gagged", true)
 
-	util.SetPData(steamid, "AresGaggedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
-	util.SetPData(steamid, "AresGaggedReason", reason)
+	util.SetPData(steamid, "RXSEND_GaggedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
+	util.SetPData(steamid, "RXSEND_GaggedReason", reason)
 
 	local timestring = string.NiceTime(time)
 
@@ -953,8 +953,8 @@ function ulx.unmute(call_ply, ply)
 	ply:AresNotify("l:ulx_admin \""..adminname.."\" l:ulx_they_removed_mute_from_you")
 	if IsValid(call_ply) then call_ply:AresNotify("l:ulx_player \""..ply:Name().."\" l:ulx_has_been_sucessfully_unmuted") end
 
-	ply:RemovePData("AresMute")
-	ply:RemovePData("AresMuteTime")
+	ply:RemovePData("RXSEND_Muted")
+	ply:RemovePData("RXSEND_MutedTime")
 	ply:SetNWBool("ulx_muted", false)
 
 	local logtext = "Unmuted "..ply:Name()
@@ -979,8 +979,8 @@ function ulx.ungag(call_ply, ply)
 	ply:AresNotify("l:ulx_admin \""..adminname.."\" l:ulx_they_removed_gag_from_you")
 	if IsValid(call_ply) then call_ply:AresNotify("l:ulx_player \""..ply:Name().."\" l:ulx_has_been_sucessfully_ungagged") end
 
-	ply:RemovePData("AresGagged")
-	ply:RemovePData("AresGaggedTime")
+	ply:RemovePData("RXSEND_Gagged")
+	ply:RemovePData("RXSEND_GaggedTime")
 	ply:SetNWBool("ulx_gagged", false)
 
 	local logtext = "Ungagged "..ply:Name()
@@ -1000,8 +1000,8 @@ function ulx.unmuteid(call_ply, steamid64)
 	
 	local remembername = GetPlayerName(steamid)
 
-	util.RemovePData(steamid, "AresMute")
-	util.RemovePData(steamid, "AresMuteTime")
+	util.RemovePData(steamid, "RXSEND_Muted")
+	util.RemovePData(steamid, "RXSEND_MutedTime")
 
 	local user = player.GetBySteamID64(steamid64)
 
@@ -1042,8 +1042,8 @@ function ulx.ungagid(call_ply, steamid64)
 		call_ply:AresNotify("l:ulx_player "..steamid64.." l:ulx_has_been_sucessfully_ungagged")
 	end
 
-	util.RemovePData(steamid, "AresGagged")
-	util.RemovePData(steamid, "AresGaggedTime")
+	util.RemovePData(steamid, "RXSEND_Gagged")
+	util.RemovePData(steamid, "RXSEND_GaggedTime")
 
 	local logtext = "Ungagged "..steamid64
 	if remembername then
@@ -1099,18 +1099,19 @@ ignore:defaultAccess( ULib.ACCESS_ALL )
 ignore:help( "" )
 
 if SERVER then
-	hook.Add("PlayerInitialSpawn", "AresMuteLoad", function(ply)
-		if ply:GetPData("AresMute", false) then
+
+	hook.Add("PlayerInitialSpawn", "RXSEND_MuteSpawn", function(ply)
+		if ply:GetPData("RXSEND_Muted", false) then
 			ply:SetNWBool("ulx_muted", true)
 		end
-		if ply:GetPData("AresGagged", false) then
+		if ply:GetPData("RXSEND_Gagged", false) then
 			ply:SetNWBool("ulx_gagged", true)
 		end
 	end)
 
 	local nextthink = 0
 
-	hook.Add("Think", "AresMuteThink", function()
+	hook.Add("Think", "RXSEND_MuteThink", function()
 
 		if CurTime() < nextthink then return end
 
@@ -1122,8 +1123,8 @@ if SERVER then
 
 			local ply = plys[i]
 
-			local mutetime = tonumber(ply:GetPData("AresMuteTime", 0))
-			local gagtime = tonumber(ply:GetPData("AresGaggedTime", 0))
+			local mutetime = tonumber(ply:GetPData("RXSEND_MutedTime", 0))
+			local gagtime = tonumber(ply:GetPData("RXSEND_GaggedTime", 0))
 
 			if ply:GetNWBool("ulx_muted", false) then
 
@@ -1135,8 +1136,8 @@ if SERVER then
 
 						SendAdminMessage(nil, "Player ".."\""..ply:Name().."\" has been unmuted: Punishment time is over.")
 
-						ply:RemovePData("AresMuteTime")
-						ply:RemovePData("AresMute")
+						ply:RemovePData("RXSEND_MutedTime")
+						ply:RemovePData("RXSEND_Muted")
 						ply:SetNWBool("ulx_muted", false)
 
 					end
@@ -1156,8 +1157,8 @@ if SERVER then
 
 						SendAdminMessage(nil, "Player ".."\""..ply:Name().."\" has been ungagged: Punishment time is over.")
 
-						ply:RemovePData("AresGaggedTime")
-						ply:RemovePData("AresGagged")
+						ply:RemovePData("RXSEND_GaggedTime")
+						ply:RemovePData("RXSEND_Gagged")
 						ply:SetNWBool("ulx_gagged", false)
 
 					end

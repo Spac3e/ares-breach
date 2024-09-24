@@ -319,7 +319,7 @@ local gradient = Material("vgui/gradient-r")
 
 function OpenClassMenu()
 if LocalPlayer():GTeam() != TEAM_SPEC then
-	AresWarning(BREACH.TranslateString("l:f2_only_for_specs"))
+	RXSENDWarning(BREACH.TranslateString("l:f2_only_for_specs"))
 	return
 end
 	local client = LocalPlayer()

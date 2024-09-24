@@ -44,7 +44,7 @@ sound.Add( {
 	volume = 1,
 	level = 90,
 	pitch = { 80, 110 },
-	sound = "april_event/chemist_miss.ogg",
+	sound = "rxsend_april_event/chemist_miss.ogg",
 
 } )
 
@@ -55,7 +55,7 @@ sound.Add( {
 	volume = .9,
 	level = 90,
 	pitch = { 95, 105 },
-	sound = "april_event/chemist_attack.ogg",
+	sound = "rxsend_april_event/chemist_attack.ogg",
 
 } )
 
@@ -228,7 +228,7 @@ end
 function SWEP:Deploy()
 
 	if SERVER then
-		self.Owner:EmitSound("april_event/chemist_line.ogg", nil, nil, nil, CHAN_VOICE)
+		self.Owner:EmitSound("rxsend_april_event/chemist_line.ogg", nil, nil, nil, CHAN_VOICE)
 	end
 
 	local speed = GetConVarNumber( "sv_defaultdeployspeed" )
