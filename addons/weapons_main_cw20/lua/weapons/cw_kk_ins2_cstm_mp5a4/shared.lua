@@ -1,17 +1,3 @@
---[[
-
-
-addons/[weapons]_no_260_kk_ins2/lua/weapons/cw_kk_ins2_cstm_mp5a4/shared.lua
-
---]]
-
---[[
-lua/weapons/cw_kk_ins2_cstm_mp5a4/shared.lua
---]]
-if not CustomizableWeaponry then return end
-
-
-
 AddCSLuaFile()
 
 AddCSLuaFile("sh_soundscript.lua")
@@ -348,7 +334,7 @@ SWEP.Primary.Ammo			= "SMG1"
 
 
 
-SWEP.FireDelay = 0.119
+SWEP.FireDelay = 0.075
 
 SWEP.FireSound = "CW_KK_INS2_MP5K_FIRE"
 
