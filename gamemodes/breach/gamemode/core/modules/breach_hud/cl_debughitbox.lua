@@ -73,7 +73,7 @@ end
 concommand.Add( "debug_hitbox", function( ply, cmd, args, str)
 
     if !ply:IsSuperAdmin() then
-        ply:RXSENDWarning("I would like to debug your non-existent superadmin rights.")
+        ply:AresWarning("I would like to debug your non-existent superadmin rights.")
         return
     end
 

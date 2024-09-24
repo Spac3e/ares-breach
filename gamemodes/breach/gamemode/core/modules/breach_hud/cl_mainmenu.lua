@@ -665,7 +665,7 @@ function StartBreach(firsttime)
             col = color_white
         end
 
-        surface.SetMaterial(Material("rxsend/discord.png", "smooth"))
+        surface.SetMaterial(Material("aresmenu/discord.png", "smooth"))
         surface.SetDrawColor(col)
         surface.DrawTexturedRect(0, 0, w, h)
     end
@@ -713,11 +713,11 @@ function StartBreach(firsttime)
     local Backgrounds = {}
     local function updatebackgrounds()
         if not GetConVar("breach_config_mge_mode"):GetBool() then
-            Backgrounds = {"rxsend/mainmenu/ntf_sniper.png", "rxsend/mainmenu/goc_commander.png", "rxsend/mainmenu/is_agent.png", "rxsend/mainmenu/scp.png", "rxsend/mainmenu/scp_096.png", "rxsend/mainmenu/scp_294.png", "rxsend/mainmenu/scp_303.png", "rxsend/mainmenu/scp_items.png", "rxsend/mainmenu/uiu_soldier.png", "rxsend/mainmenu/uiu_inflitrator.png",}
+            Backgrounds = {"aresmenu/pics/ntf_sniper.png", "aresmenu/pics/goc_commander.png", "aresmenu/pics/is_agent.png", "aresmenu/pics/scp.png", "aresmenu/pics/scp_096.png", "aresmenu/pics/scp_294.png", "aresmenu/pics/scp_303.png", "aresmenu/pics/scp_items.png", "aresmenu/pics/uiu_soldier.png", "aresmenu/pics/uiu_inflitrator.png",}
         else
             Backgrounds = {}
             for i = 1, 8 do
-                table.insert(Backgrounds, "rxsend/hard_pics/hard_pic_" .. i .. ".png")
+                table.insert(Backgrounds, "aresmenu/hard_pics/hard_pic_" .. i .. ".png")
             end
         end
     end
