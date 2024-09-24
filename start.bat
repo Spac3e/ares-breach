@@ -10,7 +10,7 @@ SET players=64
 :: Гейммод, указать название папки в gamemodes
 SET gamemode=breach
 :: Карта, без добавления .bsp
-SET map=ares_site19_supreme
+SET map=ares_site19
 ::::::::::::::::::::::::::::::::::::::::::::
 
 :: Запуск сервера, тут ничего не трогаем
