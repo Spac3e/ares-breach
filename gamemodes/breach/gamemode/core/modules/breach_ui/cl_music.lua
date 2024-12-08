@@ -28,46 +28,49 @@ local vgui = vgui
 local util = util
 local net = net
 local player = player
-BREACH.Music.GlobalVolume = BREACH.Music.GlobalVolume or 1 
---[[ *****************************************************************************
- *  Name: Music && Panic system
- *
- *  Description:  Here are the main functions for playing music
- *                and effects.
- *
- ******************************************************************************]]
+
+BREACH.Music.GlobalVolume = BREACH.Music.GlobalVolume or 1
 BREACH.Music.AudioVolume = BREACH.Music.AudioVolume or 1
+
 BREACH.EF = {}
+
 NextActionMusicTime = NextActionMusicTime or 0
 SongEnd = SongEnd or 0
 NextSeeSCPs = NextSeeSCPs or 0
 VOLUME_MODIFY = VOLUME_MODIFY or 0
+
 BREACH.Dead = BREACH.Dead or false
 BREACH.DieStart = BREACH.DieStart or 0
 BREACH.NTFEnter = BREACH.NTFEnter or 0
+
 local BreachNextThink = 0
-local thinkRate = .15
+local thinkRate = 0.15
 local volumes = {
-    ["misc"] = "breach_config_music_misc_volume",
-    ["spawn"] = "breach_config_music_spawn_volume",
-    ["ambience"] = "breach_config_music_ambient_volume",
-    ["panic"] = "breach_config_music_panic_volume",
+    misc = "breach_config_music_misc_volume",
+    spawn = "breach_config_music_spawn_volume",
+    ambience = "breach_config_music_ambient_volume",
+    panic = "breach_config_music_panic_volume",
 }
 
 local music_table = include(GM.FolderName .. "/gamemode/core/modules/breach_ui/music.lua")
-function BREACH.Music:GetVolume(n)
-    if self._volumecache and self.VolumeThink > SysTime() then
-        return self._volumecache[n]
-    else
-        if not self._volumecache then self._volumecache = {} end
-        local overall = GetConVar("breach_config_overall_music_volume"):GetFloat() / 100
-        for i, v in pairs(volumes) do
-            self._volumecache[i] = (GetConVar(v):GetFloat() * overall) / 100
-        end
+local mainmusic = GetConVar("breach_config_overall_music_volume")
 
-        self.VolumeThink = SysTime() + self.VolumeThinkRate
-        return self._volumecache[n]
+local cvarscachetbl = {}
+for k, v in pairs(volumes) do
+    cvarscachetbl[k] = GetConVar(v)
+end
+
+function BREACH.Music:GetVolume(n)
+    local currentTime = SysTime()
+    if not self._volumecache or currentTime > (self.VolumeThink or 0) then
+        self._volumecache = {}
+        local overall = mainmusic:GetFloat() / 100
+        for k, conVar in pairs(cvarscachetbl) do
+            self._volumecache[k] = (conVar:GetFloat() * overall) / 100
+        end
+        self.VolumeThink = currentTime + thinkRate
     end
+    return self._volumecache[n] or 0
 end
 
 function BREACH.Music:Play(music_id, start, skipstart, loopskip)
@@ -154,9 +157,8 @@ net.Receive("ClientStopMusic", StopeMusic)
 
 concommand.Add("debug_music_test", function() BREACH.Music:Play(BR_MUSIC_FBI_AGENTS_ESCAPE) end)
 function BREACH.Music:ShouldMusicPlayAtTheMoment()
-    if self.StartAt and self._endAt and self.CurrentMusic then if (SysTime() - self.StartAt) < self._endAt then return true end end
-    if self.IsFading then return true end
-    return false
+    local isPlaying = self.StartAt and self._endAt and self.CurrentMusic and (SysTime() - self.StartAt) < self._endAt
+    return isPlaying or self.IsFading
 end
 
 function BREACH.Music:CanPlayGenericMusic()

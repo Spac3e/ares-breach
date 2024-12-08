@@ -377,74 +377,74 @@ function mply:AnimatedHeal(amount)
         end
     end)
 end
-
 function mply:UnUseBag()
-	if self:GetUsingBag() == "" then return end
-	local tbl_bonemerged = ents.FindByClassAndParent( "breach_bonemerge", self )
-	for i = 1, #tbl_bonemerged do
-	 local bonemerge = tbl_bonemerged[ i ]
-	 print(bonemerge:GetModel())
-	 if bonemerge:GetModel() == "models/cultist/backpacks/bonemerge/backpack_big.mdl" or bonemerge:GetModel() == "models/cultist/backpacks/bonemerge/backpack_small.mdl" then
-		 bonemerge:Remove()
-	 end
- local item = ents.Create( self:GetUsingBag(self:GetClass()) )
- if IsValid( item ) then
-	 item:Spawn()
-	 item:SetPos( self:GetPos() )
- end
- self:SetUsingBag("")
- end
+    if self:GetUsingBag() == "" then return end
+    local tbl_bonemerged = ents.FindByClassAndParent("breach_bonemerge", self)
+    for i = 1, #tbl_bonemerged do
+        local bonemerge = tbl_bonemerged[i]
+        print(bonemerge:GetModel())
+        if bonemerge:GetModel() == "models/cultist/backpacks/bonemerge/backpack_big.mdl" or bonemerge:GetModel() == "models/cultist/backpacks/bonemerge/backpack_small.mdl" then bonemerge:Remove() end
+        local item = ents.Create(self:GetUsingBag(self:GetClass()))
+        if IsValid(item) then
+            item:Spawn()
+            item:SetPos(self:GetPos())
+        end
+
+        self:SetUsingBag("")
+    end
 end
 
 function mply:UnUseBro()
- if self:GetUsingArmor() == "" then return end
- local tbl_bonemerged = ents.FindByClassAndParent( "breach_bonemerge", self )
- for i = 1, #tbl_bonemerged do
-	 local bonemerge = tbl_bonemerged[ i ]
-	 print(bonemerge:GetModel())
-	 if bonemerge:GetModel() == "models/cultist/armor_pickable/bone_merge/heavy_armor.mdl" or bonemerge:GetModel() == "models/cultist/armor_pickable/bone_merge/light_armor.mdl" then
-		 bonemerge:Remove()
-	 end
- local item = ents.Create( self:GetUsingArmor(self:GetClass()) )
- if IsValid( item ) then
-	 item:Spawn()
-	 item:SetPos( self:GetPos() )
- end
- self:SetUsingArmor("")
- end
+    if self:GetUsingArmor() == "" then return end
+    local tbl_bonemerged = ents.FindByClassAndParent("breach_bonemerge", self)
+    for i = 1, #tbl_bonemerged do
+        local bonemerge = tbl_bonemerged[i]
+        print(bonemerge:GetModel())
+        if bonemerge:GetModel() == "models/cultist/armor_pickable/bone_merge/heavy_armor.mdl" or bonemerge:GetModel() == "models/cultist/armor_pickable/bone_merge/light_armor.mdl" then bonemerge:Remove() end
+        local item = ents.Create(self:GetUsingArmor(self:GetClass()))
+        if IsValid(item) then
+            item:Spawn()
+            item:SetPos(self:GetPos())
+        end
+
+        self:SetUsingArmor("")
+    end
 end
 
 function mply:UnUseHat()
- if self:GetUsingHelmet() == "" then return end
- local tbl_bonemerged = ents.FindByClassAndParent( "breach_bonemerge", self )
- for i = 1, #tbl_bonemerged do
-	 local bonemerge = tbl_bonemerged[ i ]
-	 print(bonemerge:GetModel())
-	 if bonemerge:GetModel() == "models/cultist/humans/mog/head_gear/mog_helmet.mdl" or bonemerge:GetModel() == "models/cultist/humans/security/head_gear/helmet.mdl" then
-		 bonemerge:Remove()
-	 end
-	 local item = ents.Create( self:GetUsingHelmet(self:GetClass()) )
-	 if IsValid( item ) then
-		 item:Spawn()
-		 item:SetPos( self:GetPos() )
-	 end
-	 self:SetUsingHelmet("")
- end
+    if self:GetUsingHelmet() == "" then return end
+    local tbl_bonemerged = ents.FindByClassAndParent("breach_bonemerge", self)
+    for i = 1, #tbl_bonemerged do
+        local bonemerge = tbl_bonemerged[i]
+        print(bonemerge:GetModel())
+        if bonemerge:GetModel() == "models/cultist/humans/mog/head_gear/mog_helmet.mdl" or bonemerge:GetModel() == "models/cultist/humans/security/head_gear/helmet.mdl" then bonemerge:Remove() end
+        local item = ents.Create(self:GetUsingHelmet(self:GetClass()))
+        if IsValid(item) then
+            item:Spawn()
+            item:SetPos(self:GetPos())
+        end
+
+        self:SetUsingHelmet("")
+    end
 end
 
 function mply:ForceDropWeapon( class )
-	if self:HasWeapon( class ) then
-		local wep = self:GetWeapon( class )
-		if IsValid( wep ) and IsValid( self ) then
-			if self:GTeam() == TEAM_SPEC then return end
-			local atype = wep:GetPrimaryAmmoType()
-			if atype > 0 then
-				wep.SavedAmmo = wep:Clip1()
-			end	
-			if wep:GetClass() == nil then return end
-			if wep.droppable != nil and !wep.droppable then return end
-			self:DropWeapon( wep )
+	if not self:HasWeapon(class) then
+		return
+	end
+
+	local wep = self:GetWeapon( class )
+
+	if IsValid( wep ) then
+		local atype = wep:GetPrimaryAmmoType()
+
+		if atype > 0 then
+			wep.SavedAmmo = wep:Clip1()
 		end
+
+		self:DropWeapon( wep )
+
+		wep:PhysWake()
 	end
 end
 
@@ -907,7 +907,7 @@ function mply:ApplyRoleStats(role)
 	elseif !isblack then
 		self:SetSkin(0)
 	end
-		
+
 	for i = 0, self:GetNumBodyGroups() do
 		self:SetBodygroup( i, 0 )
 	end
@@ -922,7 +922,7 @@ function mply:ApplyRoleStats(role)
             self:SetBodygroup(i, role[bodygroupKey])
         end
     end
-	
+
 	if role.cispy then
 		self:SetupCISpy()
 	end
@@ -941,7 +941,7 @@ function mply:ApplyRoleStats(role)
 
 	if role.keycard and role.keycard != "" then 
 		self:Give("breach_keycard_"..role.keycard)
-	end 
+	end
 
     self:StripAmmo()
 

@@ -180,7 +180,7 @@ if SERVER then
 			end
 		end
 
-		SafeRemoveEntity(self)
+		--SafeRemoveEntity(self)
 	end
 end
 

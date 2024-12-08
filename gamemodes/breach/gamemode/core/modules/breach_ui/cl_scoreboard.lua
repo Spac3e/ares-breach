@@ -569,9 +569,9 @@ function PANEL:DoRightClick()
     menu.Player = self:GetPlayer()
     local close = hook.Call("BrScoreboardMenu", nil, menu)
     if close then menu:Remove() end
-    local name = GAS.CountryCodes[menu.Player:GetNWString("country", "RU")]
+    local name = GAS and GAS.CountryCodes[menu.Player:GetNWString("country", "RU")] or "RU"
     local country = menu:AddOption("", function()
-        SetClipboardText(GAS.CountryCodes[menu.Player:GetNWString("country", "RU")])
+        SetClipboardText(name)
         surface.PlaySound("buttons/button9.wav")
     end)
 
@@ -619,6 +619,12 @@ function PANEL:DoRightClick()
     menu.Paint = function(self, w, h)
         if not GAMEMODE.ShowScoreboard then self:Remove() end
         draw.RoundedBox(0, 0, 0, w, h, ColorAlpha(color_black, 225))
+    end
+
+    for _, v in ipairs(menu:GetCanvas():GetChildren()) do
+        if v.SetTextColor then
+            v:SetTextColor(ColorAlpha(color_white, 225))
+        end
     end
 end
 

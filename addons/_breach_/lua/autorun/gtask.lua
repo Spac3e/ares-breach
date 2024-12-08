@@ -1,223 +1,182 @@
---[[
-MIT License
+local yield = coroutine.yield
+local create = coroutine.create
+local resume = coroutine.resume
+local timerSimple = timer.Simple
+local SysTime = SysTime
+local call = hook.Run
 
-Copyright (c) 2020 Aleksandrs Filipovskis
+local Create, GetTable do
+	local Run, co, running, start
+	local pcall, ErrorNoHalt = pcall, ErrorNoHalt
+	local index, list, names = 0, {}, {}
+	local rate = 1 / 300 --This is the allowable time for the task to be completed
+	local wait = 1 / 16 --This is the time between executions
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+	function GetTable() return list, index end
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+	function Create(name, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+		index = index + 1
+		names[index] = name
+		list[index] = function()
+			return pcall(fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+		end
+		if not running then
+			running = true
+			timerSimple(wait, Run)
+		end
+		return index
+	end
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
---]]
+	function Run()
+		start = SysTime()
+		local success, breakruntime = resume(co)
+		if not success or breakruntime then
+			running = false
+		else
+			timerSimple(wait, Run)
+		end
+	end
 
-local VERSION = 112
-
-if gtask and (not gtask.version or gtask.version <= VERSION) then
-    return
+	co = create(function()
+		while true do
+			local fn, name = list[index], names[index]
+			index = index - 1
+			if fn ~= nil then
+				if SysTime() - start > rate then yield() end
+				local succ, err = fn()
+				if not succ then
+					ErrorNoHalt('Task failed: ', name, '\n\t', err, '\n')
+				end
+			end
+			if index == 0 then yield(true) end
+		end
+	end)
 end
 
-local CurTime, remove, ipairs, unpack, assert, isnumber, isstring, isfunction = CurTime, table.remove, ipairs, unpack, assert, isnumber, isstring, isfunction
+local NewThread, GetThreadTable do
+	local format = string.format
+	local timerCreate = timer.Create
+	local timerRemove = timer.Remove
+	local wait = coroutine.wait
+	local status = coroutine.status
+	local start = 0
+	local mt = {counter = 0}
+	local pool = {}
+	mt.__index = mt
 
-local task = {version = VERSION}
-local stored = {}
+	function mt:Remove()
+		timerRemove(self.id)
+		call('ThreadDestroy', self.name)
+	end
 
-local function NewTask(data)
-    local index = #stored + 1
+	function mt:Destroy()
+		self.Callback()
+		timerRemove(self.id)
+		call('ThreadDestroy', self.name)
+	end
 
-    data.started = CurTime()
-    data.paused = false
-    data.index = index
+	function mt:SetRemoveCondition(fn)
+		self.shouldrm = fn
+	end
 
-    stored[index] = data
+	function mt:yield(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+		yield(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+	end
 
-    return index
+	function mt:wait(s)
+		wait(s)
+	end
+
+	function mt:pause(c)
+		self.counter = self.counter + 1
+		if self.counter > c then
+			self.counter = 0
+			yield()
+		end
+	end
+
+	function mt:limit(c)
+		if SysTime() - start > c then yield() end
+	end
+
+	function mt:status()
+		return status(self.thread)
+	end
+
+	function mt:wrap(fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+		local co = create(fn)
+		self.Callback = function()
+			if status(co) == 'dead' or (self.shouldrm and self:shouldrm()) then self:Remove() return end
+			start = SysTime()
+			local succ, out1, out2, out3, out4, out5, out6, out7, out8 =
+				resume(co, self, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+			if not succ then Error(out1) end
+			return out1, out2, out3, out4, out5, out6, out7, out8
+		end
+		self.thread = co
+		return self.Callback
+	end
+
+	function mt:GetRuntime()
+		return SysTime() - self.start
+	end
+
+	function mt:__call()
+		return self.fn()
+	end
+
+	function NewThread(name, rate, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+		call('ThreadRunning', name)
+		local id = format('ThreadObject::%s', name)
+		local obj = setmetatable({name = name, id = id, start = SysTime()}, mt)
+		timerCreate(id,
+			rate, 0, obj:wrap(fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
+		return obj
+	end
+
+	function GetThreadTable()
+		return pool
+	end
 end
 
-local function CallTask(index)
-    local data = stored[index]
-    if data then
+task = {
+	Create = Create,
+	GetTable = GetTable,
+	NewThread = NewThread,
+	GetThreadTable = GetThreadTable
+}
 
-        if data.paused then return end
+if CLIENT then
+    local buffer, lowbuffer = {}, {}
+    local GetAll = player.GetAll
+    local DistToSqr = FindMetaTable("Vector").DistToSqr
+    local range = 1500 * 1500
+    local lowrange = 500 * 500
+    local EyePos = EyePos
 
-        local now = CurTime()
-        local diff = now - data.started
-
-        if diff >= data.time then
-            local repeats = data.repeats
-
-            if not data.infinite then
-                if repeats == 1 then
-                    remove(stored, index)
-                    goto done
+    local function PopulateCache(co)
+        local k, ent
+        local rate = 1 / 9000
+        while true do
+            k, ent = next(GetAll(), k)
+            if k ~= nil and IsValid(ent) then
+                local d = DistToSqr(EyePos(), ent:GetPos())
+                if d < lowrange then
+                    lowbuffer[ent] = true
+                    buffer[ent] = true
+                elseif d < range then
+                    buffer[ent] = true
+                    lowbuffer[ent] = nil
+                else
+                    buffer[ent] = nil
+                    lowbuffer[ent] = nil
                 end
-
-                data.repeats = repeats - 1
             end
-
-            data.started = now
-
-            ::done::
-
-            data.func( unpack(data.args) )
+            co:limit(rate)
         end
     end
+
+    task.NewThread("PopulatePlayerCache", 1 / 3, PopulateCache)
+    _G.HighLevelBuffer = buffer
+    _G.LowLevelBuffer = lowbuffer
 end
-
---- Create simple task
----@param time number
----@param func function
-function task.Simple(time, func, ...)
-    assert(isnumber(time))
-    assert(isfunction(func))
-
-    return NewTask({
-        time = time,
-        func = func,
-        args = {...},
-        repeats = 1
-    })
-end
-
---- Create advanced task
----@param name string
----@param time number
----@param repeats number
----@param func function
-function task.Create(name, time, repeats, func, ...)
-    assert(isstring(name))
-    assert(isnumber(time))
-    assert(isfunction(func))
-
-    if task.Exists(name) then
-       task.Kill(name)
-    end
-
-    local infinite = (repeats == 0)
-
-    return NewTask({
-        name = name,
-        time = time,
-        func = func,
-        args = {...},
-        repeats = repeats,
-        infinite = infinite
-    })
-end
-
---- Get task's data by its name
----@param name string
----@return table
-function task.Get(name)
-    for index, data in ipairs(stored) do
-        if (data.name == name) then
-            return data, index
-        end
-    end
-end
-
---- Get all tasks
----@return table
-function task.GetTable()
-    return table.Copy(stored)
-end
-
---- Check if task with given name exists
----@param name string
----@return boolean
-function task.Exists(name)
-    return task.Get(name) ~= nil
-end
-
---- Delete task
---- *Alias: task.Remove*
----@param name string
-function task.Kill(name)
-    local _, index = task.Get(name)
-    if index then
-        remove(stored, index)
-    end
-end
-
---- Get how many repetitions left
----@param name string
----@return number
-function task.RepsLeft(name)
-    local obj = task.Get(name)
-
-    return obj.repeats
-end
-
---- Get how much **not rounded** time left
----@param name string
----@return number
-function task.TimeLeft(name)
-    local obj = task.Get(name)
-    local diff = (CurTime() - obj.started)
-
-    return obj.time - diff
-end
-
---- Get task delay
----@param name string
----@return number
-function task.GetDelay(name)
-    local obj = task.Get(name)
-
-    return obj.time
-end
-
---- Pause or unpause task
----@param name string
----@param bool boolean
-function task.Pause(name, bool)
-    local obj = task.Get(name)
-
-    obj.paused = bool
-end
-
---- Toggle task (pause or unpause)
----@param name string
-function task.Toggle(name)
-    local obj = task.Get(name)
-
-    obj.paused = not obj.paused
-end
-
---- Adjust task's delay
----@param name string
----@param time number
-function task.Adjust(name, time)
-    local obj = task.Get(name)
-
-    obj.time = time
-    obj.started = CurTime()
-end
-
---- Do one repeat for task
----@param name string
-function task.Complete(name)
-    local obj = task.Get(name)
-    obj.time = 0
-end
-
-task.Remove = task.Kill
-
-hook.Add("Tick", "gtask.Tick", function()
-    for index = 1, #stored do
-        CallTask(index)
-    end
-end)
-
-_G.gtask = task

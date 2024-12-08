@@ -454,28 +454,37 @@ local function DrawInspectWindow(wep, customname, id)
     end
 
     BREACH.Inventory.SelectedID = id
+
+    local dispname = customname
+    if !dispname and IsValid(wep) and wep.ClassName then
+        dispname = L(GetLangWeapon(wep.ClassName)) or "ERROR!"
+    end
+
     surface.SetFont("BudgetNewSmall2")
-    local swidth, sheight = surface.GetTextSize(customname or wep and wep.ClassName and L(GetLangWeapon(wep.ClassName)) or "ERROR!")
+    local swidth, sheight = surface.GetTextSize(dispname)
+
     BREACH.Inventory.InspectWindow = vgui.Create("DPanel")
     BREACH.Inventory.InspectWindow:SetSize(swidth + 8, sheight + 4)
     BREACH.Inventory.InspectWindow:SetText("")
     BREACH.Inventory.InspectWindow:SetPos(gui.MouseX() + 15, gui.MouseY())
-    BREACH.Inventory.InspectWindow.OnRemove = function() if IsValid(BREACH.Inventory) then BREACH.Inventory.SelectedID = nil end end
+    BREACH.Inventory.InspectWindow.OnRemove = function()
+        if IsValid(BREACH.Inventory) then
+            BREACH.Inventory.SelectedID = nil
+        end
+    end
+
     BREACH.Inventory.InspectWindow.Paint = function(self, w, h)
-        if not vgui.CursorVisible() then self:Remove() end
+        if not vgui.CursorVisible() then
+            self:Remove()
+        end
         self:SetPos(gui.MouseX() + 15, gui.MouseY())
         DrawBlurPanel(self)
         draw.RoundedBox(0, 0, 0, w, h, clrgreyinspect)
         draw.OutlinedBox(0, 0, w, h, 2, color_black)
-        if not customname then
-            self:SetSize(swidth + 8, sheight + 4)
-            draw.SimpleText(customname or wep and wep.ClassName and L(GetLangWeapon(wep.ClassName)) or "ERROR!", "BudgetNewSmall2", 5, 2, clrgreyinspect2, TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
-            draw.SimpleText(customname or wep and wep.ClassName and L(GetLangWeapon(wep.ClassName)) or "ERROR!", "BudgetNewSmall2", 4, 0, color_black, TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
-        else
-            self:SetSize(swidth + 8, sheight + 4)
-            draw.SimpleText(customname or wep and wep.ClassName and GetLangWeapon(wep.ClassName) or "ERROR!", "BudgetNewSmall2", 6, 2, color_black, TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
-            draw.SimpleText(customname or wep and wep.ClassName and GetLangWeapon(wep.ClassName) or "ERROR!", "BudgetNewSmall2", 4, 0, ColorAlpha(color_white, 210), TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
-        end
+
+        self:SetSize(swidth + 8, sheight + 4)
+        draw.SimpleText(dispname, "BudgetNewSmall2", 6, 2, color_black, TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
+        draw.SimpleText(dispname, "BudgetNewSmall2", 4, 0, ColorAlpha(color_white, 210), TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
     end
 end
 

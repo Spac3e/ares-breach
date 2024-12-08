@@ -34,19 +34,6 @@ BREACH.MainMenu_Spawns = {
 	{Vector(6839, -5624, 290), Angle(5, 53, 0)}
 }
 
-hook.Add("SetupMove", "SCP_DOWN_SPEED", function( ply, mv, cmd )
-	if ply:GTeam() == TEAM_SCP then
-		local speedmultiply = math.min(1, ply:GetNWInt("Speed_Multiply", 1))
-
-		if speedmultiply < 1 then
-			local speed = ply:GetRunSpeed() * speedmultiply
-
-			mv:SetMaxSpeed( speed )
-			mv:SetMaxClientSpeed( speed )
-		end
-	end
-end)
-
 function BREACH.TranslateString(str)
 	if SERVER then return str end --серверу все равно не надо ничего переводить
 
@@ -711,85 +698,15 @@ BREACH.EMOTES = {
 	},
 }
 
-if CLIENT then
-
-local induck = false
-
-hook.Add("PlayerBindPress", "ToggleDuck", function(ply, bind, pressed)
-	if (string.find(bind, "duck")) then
-		return true
-	end
-end)
-
-hook.Add("PlayerButtonDown", "ToggleDuck", function(ply, button)
-	if button == input.GetKeyCode(input.LookupBinding("+duck")) and IsFirstTimePredicted() then
-		induck = !induck
-		if !induck then ply.crouchcd = CurTime() + 1 end
-		if ply.crouchcd and ply.crouchcd > CurTime() and induck then induck = false end
-	end
-end)
-
-hook.Add("CreateMove", "ToggleDuck", function(cmd)
-	local ply = LocalPlayer()
-
-	if induck then
-		LocalPlayer():SetDuckSpeed(0.1)
-		LocalPlayer():SetUnDuckSpeed(0.1)
-		cmd:AddKey(IN_DUCK)
-	else
-		cmd:RemoveKey(IN_DUCK)
-	end
-
-	local movetype = ply:GetMoveType()
-
-	if movetype == MOVETYPE_OBSERVER and induck then
-		cmd:RemoveKey(IN_DUCK)
-	end
-
-	if ply:GTeam() != TEAM_SCP then
-
-		local actwep = ply:GetActiveWeapon()
-		local actwepvalid = IsValid(actwep)
-		local actwep_class = actwepvalid and actwep:GetClass()
-
-		if actwepvalid then
-			if actwep_class == "item_shield" then
-				cmd:RemoveKey(IN_DUCK)
-			end
-		end
-	end
-
-	--всегда на конце
-	if !cmd:KeyDown(IN_DUCK) then
-		induck = false
-	end
-end)
-
-end
-
-hook.Add("SetupMove", "OverrideMovement", function(ply, mv, cmd)
-	local movetype = ply:GetMoveType()
-	if movetype == MOVETYPE_NOCLIP or movetype == MOVETYPE_OBSERVER then
-	return
-end
-
 hook.Add("SetupMove", "StanceSpeed", function(ply, mv, cmd)
     local velLength = ply:GetVelocity():Length2DSqr()
-
-	if ply:GetRoleName() == "UIU Infiltrator" or ply:GetRoleName() == "Class-D Stealthy" or ply:GetRoleName() == "Class-D Fast" then
-		return
-	end
-
-    if mv:KeyReleased(IN_SPEED) or (mv:KeyDown(IN_SPEED) and velLength < 0.25) then
-        ply.Run_fading = true
-    end
-
+    if mv:KeyReleased(IN_SPEED) or mv:KeyDown(IN_SPEED) and velLength < .25 then ply.Run_fading = true end
     if mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) then
         ply.Run_fading = true
-        mv:SetSideSpeed(mv:GetSideSpeed() * 0.35)
+        mv:SetSideSpeed(mv:GetSideSpeed() * .35)
     end
 
-    if mv:KeyDown(IN_SPEED) and velLength > 0.25 or (ply.SprintMove and not ply.Run_fading) then
+    if mv:KeyDown(IN_SPEED) and velLength > .25 or ply.SprintMove and not ply.Run_fading then
         if ply:IsLeaning() then
             ply:SetNW2Int("LeanOffset", 0)
             ply.OldStatus = nil
@@ -809,7 +726,6 @@ hook.Add("SetupMove", "StanceSpeed", function(ply, mv, cmd)
         ply.Sprint_Speed = math.Approach(ply.Sprint_Speed, walk_Speed, FrameTime() * 128)
         mv:SetMaxClientSpeed(ply.Sprint_Speed)
         mv:SetMaxSpeed(ply.Sprint_Speed)
-
         if ply.Sprint_Speed == walk_Speed then
             ply.SprintMove = nil
             ply.Sprint_Speed = nil
@@ -818,19 +734,19 @@ hook.Add("SetupMove", "StanceSpeed", function(ply, mv, cmd)
 
     if ply:Crouching() then
         local walk_speed = ply:GetWalkSpeed()
-        mv:SetMaxClientSpeed(walk_speed * 0.5)
-        mv:SetMaxSpeed(walk_speed * 0.5)
+        mv:SetMaxClientSpeed(walk_speed * .5)
+        mv:SetMaxSpeed(walk_speed * .5)
     end
 
     local wep = ply:GetActiveWeapon()
-    if wep != NULL and wep.CW20Weapon and wep.dt.State == CW_AIMING then
-        mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * 0.5)
-        mv:SetMaxSpeed(mv:GetMaxSpeed() * 0.5)
+    if wep ~= NULL and wep.CW20Weapon and wep.dt.State == CW_AIMING then
+        mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * .5)
+        mv:SetMaxSpeed(mv:GetMaxSpeed() * .5)
     end
 
     if ply:IsLeaning() then
-        mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * 0.75)
-        mv:SetMaxSpeed(mv:GetMaxSpeed() * 0.75)
+        mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * .75)
+        mv:SetMaxSpeed(mv:GetMaxSpeed() * .75)
     end
 
     if ply.SpeedMultiplier then
@@ -839,54 +755,86 @@ hook.Add("SetupMove", "StanceSpeed", function(ply, mv, cmd)
     end
 end)
 
-local pl = ply:GetTable()
-local rolename = pl:GetRoleName()
-local ducking = mv:KeyDown(IN_DUCK)
-local jumping = mv:KeyDown(IN_JUMP)
-local buttons = mv:GetButtons()
+if CLIENT then
+    local induck = false
+    hook.Add("PlayerBindPress", "ToggleDuck", function(ply, bind, pressed) if string.find(bind, "duck") then return true end end)
+    hook.Add("PlayerButtonDown", "ToggleDuck", function(ply, button)
+        if button == input.GetKeyCode(input.LookupBinding("+duck")) and IsFirstTimePredicted() then
+            induck = not induck
+            if not induck then ply.crouchcd = CurTime() + 1 end
+            if ply.crouchcd and ply.crouchcd > CurTime() and induck then induck = false end
+        end
+    end)
 
-pl.PlayCrouchSound = false
-if (ply:KeyPressed(IN_DUCK) and IsFirstTimePredicted()) then
-	pl.PlayCrouchSound = true
+    hook.Add("CreateMove", "ToggleDuck", function(cmd)
+        local ply = LocalPlayer()
+        if induck then
+            LocalPlayer():SetDuckSpeed(0.1)
+            LocalPlayer():SetUnDuckSpeed(0.1)
+            cmd:AddKey(IN_DUCK)
+        else
+            cmd:RemoveKey(IN_DUCK)
+        end
+
+        local movetype = ply:GetMoveType()
+        if movetype == MOVETYPE_OBSERVER and induck then cmd:RemoveKey(IN_DUCK) end
+        if ply:GTeam() ~= TEAM_SCP then
+            local actwep = ply:GetActiveWeapon()
+            local actwepvalid = IsValid(actwep)
+            local actwep_class = actwepvalid and actwep:GetClass()
+            if actwepvalid then if actwep_class == "item_shield" then cmd:RemoveKey(IN_DUCK) end end
+        end
+
+        if not cmd:KeyDown(IN_DUCK) then --всегда на конце
+            induck = false
+        end
+    end)
 end
 
-if pl.PlayCrouchSound then
-	if AllowedModels[ply:GetModel()] then
-		ply:EmitSound( "^nextoren/charactersounds/foley/posechange_" .. math.random( 1, 6 ) .. ".wav", 60, math.random( 100, 105 ), 1, CHAN_STATIC )
-	end
-	pl.PlayCrouchSound = false
-	pl.PlayUnCrouchSoundLater = true
-end
+hook.Add("SetupMove", "OverrideMovement", function(ply, mv, cmd)
+    local movetype = ply:GetMoveType()
+    if movetype == MOVETYPE_NOCLIP or movetype == MOVETYPE_OBSERVER then return end
+    local pl = ply:GetTable()
+    local rolename = pl:GetRoleName()
+    local ducking = mv:KeyDown(IN_DUCK)
+    local jumping = mv:KeyDown(IN_JUMP)
+    local buttons = mv:GetButtons()
 
-if pl.PlayUnCrouchSoundLater and !ducking then
-	if AllowedModels[ply:GetModel()] then
-		ply:EmitSound( "^nextoren/charactersounds/foley/posechange_" .. math.random( 1, 6 ) .. ".wav", 60, math.random( 90, 95 ), 1, CHAN_STATIC )
-	end
-	pl.PlayUnCrouchSoundLater = false
-end
-	if ply:GTeam() != TEAM_SCP then
-		if ducking then
-			ply:SetDuckSpeed(0.1)
-			ply:SetUnDuckSpeed(0.1)
-			if jumping and !ply:IsSuperAdmin() then
-				mv:SetButtons(buttons - IN_JUMP)
-			end
+	if ply:GTeam() == TEAM_SCP then
+		local speedmultiply = math.min(1, ply:GetNWInt("Speed_Multiply", 1))
+
+		if speedmultiply < 1 then
+			local speed = ply:GetRunSpeed() * speedmultiply
+
+			mv:SetMaxSpeed( speed )
+			mv:SetMaxClientSpeed( speed )
 		end
-
-	else
-
-		if jumping and !canjumpscp[rolename] then
-			mv:SetButtons(buttons - IN_JUMP)
-		end
-
-		if ducking and !cancrouchscp[rolename] then
-			mv:SetButtons(buttons - IN_DUCK)
-		end
-
 	end
 
+    pl.PlayCrouchSound = false
+    if ply:KeyPressed(IN_DUCK) and IsFirstTimePredicted() then pl.PlayCrouchSound = true end
+    if pl.PlayCrouchSound then
+        if AllowedModels[ply:GetModel()] then ply:EmitSound("^nextoren/charactersounds/foley/posechange_" .. math.random(1, 6) .. ".wav", 60, math.random(100, 105), 1, CHAN_STATIC) end
+        pl.PlayCrouchSound = false
+        pl.PlayUnCrouchSoundLater = true
+    end
+
+    if pl.PlayUnCrouchSoundLater and not ducking then
+        if AllowedModels[ply:GetModel()] then ply:EmitSound("^nextoren/charactersounds/foley/posechange_" .. math.random(1, 6) .. ".wav", 60, math.random(90, 95), 1, CHAN_STATIC) end
+        pl.PlayUnCrouchSoundLater = false
+    end
+
+    if ply:GTeam() ~= TEAM_SCP then
+        if ducking then
+            ply:SetDuckSpeed(0.1)
+            ply:SetUnDuckSpeed(0.1)
+            if jumping and not ply:IsSuperAdmin() then mv:SetButtons(buttons - IN_JUMP) end
+        end
+    else
+        if jumping and not canjumpscp[rolename] then mv:SetButtons(buttons - IN_JUMP) end
+        if ducking and not cancrouchscp[rolename] then mv:SetButtons(buttons - IN_DUCK) end
+    end
 end)
-
 BREACH = BREACH || {}
 
 local mply = FindMetaTable("Player")

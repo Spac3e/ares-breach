@@ -5,7 +5,7 @@ addons/[weapons]_cw_20/lua/weapons/cw_base/sh_move.lua
 
 --]]
 
-local reg = debug.getregistry()
+/*local reg = debug.getregistry()
 local GetActiveWeapon = reg.Player.GetActiveWeapon
 local GetDTFloat = reg.Entity.GetDTFloat
 local GetRunSpeed = reg.Player.GetRunSpeed
@@ -61,4 +61,4 @@ function CW_StartCommand(ply, ucmd)
 	end
 end
 
-hook.Add("StartCommand", "CW_StartCommand", CW_StartCommand)
+hook.Add("StartCommand", "CW_StartCommand", CW_StartCommand)*/

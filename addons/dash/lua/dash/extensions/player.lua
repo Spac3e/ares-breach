@@ -15,6 +15,34 @@ function player.GetStaff()
 	return table.Filter(player.GetAll(), PLAYER.IsAdmin)
 end
 
+function player.GetBySteamID( ID )
+	local plys, id = player.GetAll(), string.upper(ID)
+
+	for i = 1, #plys do
+		local pl = plys[i]
+
+		if pl:SteamID() == id then
+			return pl
+		end
+	end
+
+	return false
+end
+
+function player.GetBySteamID64( ID )
+	local plys, id = player.GetAll(), tostring(ID)
+
+	for i = 1, #plys do
+		local pl = plys[i]
+
+		if pl:SteamID64() == id then
+			return pl
+		end
+	end
+
+	return false
+end
+
 -- meta
 function PLAYER:__index(key)
 	return PLAYER[key] or ENTITY[key] or GetTable(self)[key]

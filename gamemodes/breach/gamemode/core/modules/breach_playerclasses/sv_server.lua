@@ -207,6 +207,7 @@ end)
 
 net.Receive( "DropWeapon", function( len, ply )
 	local class = net.ReadString()
+
 	if class then
 		ply:ForceDropWeapon( class )
 	end
