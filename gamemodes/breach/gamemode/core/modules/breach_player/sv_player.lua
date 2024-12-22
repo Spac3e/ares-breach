@@ -221,17 +221,7 @@ function mply:IgniteSequence(time)
 	self:SetNWBool("FireParticles", true)
 
 	if self:GTeam() == TEAM_SPEC or self:GetMoveType() == MOVETYPE_NOCLIP or not self:Alive() then
-		if timer.Exists(startfireshow) then
-			timer.Remove(startfireshow)
-		elseif timer.Exists(endfireshow) then
-			timer.Remove(endfireshow)
-		elseif timer.Exists(burningout) then
-			timer.Remove(burningout)
-		end
-
-		self:Extinguish()
-
-		return
+		return self:StopIgniteSequence()
 	end
 
     timer.Create(startfireshow, 0, 0, function()
@@ -249,7 +239,11 @@ function mply:IgniteSequence(time)
 				return
 			end
 
-			if self:Health() <= 24 then
+			if self:Health() <= 24 and self:Alive() then
+				if self:GTeam() == TEAM_SCP then
+					return self:Kill()
+				end
+
                 self:Extinguish()
                 self:GodEnable()
                 self:SetMoveType(MOVETYPE_OBSERVER)
@@ -258,8 +252,7 @@ function mply:IgniteSequence(time)
                 self:SelectWeapon("br_holster")
                 self:SetForcedAnimation("mpf_idleonfire", 20)
 
-                local burnsound = "^nextoren/charactersounds/hurtsounds/hg_onfire0" .. math.random(1, 4) .. ".wav"
-                self:EmitSound(burnsound, 60, math.random(100, 105), 1, CHAN_STATIC)
+				self:Voice("burn")
 
 				timer.Create(burningout , 3.8, 1, function()
                     if not IsValid(self) then return end
@@ -268,10 +261,11 @@ function mply:IgniteSequence(time)
 					self:SetNWEntity("NTF1Entity", NULL)
 					self:SetNWAngle("ViewAngles", Angle(0, 0, 0))
 					self:SetMoveType(MOVETYPE_WALK)
-					self:StopSound(burnsound)
 					self:SetModel("models/cultist/humans/corpse.mdl")
+					self:StopSound(self.burnSound or "")
 
 					self.burnttodeath = true
+					self.burnSound = nil
 
 					self:GodDisable()
 					self:Kill()
@@ -297,7 +291,7 @@ function mply:IgniteSequence(time)
                 return
             end
 
-			self:EmitSound("nextoren/charactersounds/hurtsounds/fire/pl_burnpain0" .. math.random(1, 6) .. ".wav", 75, 100, 1, CHAN_WEAPON)
+			self:Voice("burning")
 			self:TakeDamage(funnehdmg, self, DMG_BURN)
 		end
     end)
@@ -313,6 +307,31 @@ function mply:IgniteSequence(time)
     end)
 end
 
+function mply:StopIgniteSequence()
+	if IsValid(self) then
+		local steamid = self:SteamID64()
+		local startfireshow = "StartingFireShow" .. steamid
+		local endfireshow = "EndingFireShow" .. steamid
+		local burningout = "BurningOut" .. steamid
+
+		if timer.Exists(startfireshow) then
+			timer.Remove(startfireshow)
+		elseif timer.Exists(endfireshow) then
+			timer.Remove(endfireshow)
+		elseif timer.Exists(burningout) then
+			timer.Remove(burningout)
+		end
+
+		if self.burnSound then
+			self:StopSound(self.burnSound)
+			self.burnSound = nil
+		end
+
+		self:SetNWBool("FireParticles", false)
+		self:StopParticles()
+		self:Extinguish()
+	end
+end
 
 function mply:ClearBodyGroups()
 	for i = 0, self:GetNumBodyGroups() - 1 do
@@ -513,9 +532,11 @@ function mply:SetupNormal()
 		v:Remove()
 	end
 
+	self:StopIgniteSequence()
 	self:ClearBodyGroups()
 
 	self:SetSkin(0)
+	self.weaponfromclient = nil
 	self.IsZombie = false
 	self:StripWeapons()
 	self:StripAmmo()
@@ -824,15 +845,15 @@ function mply:ApplyRoleStats(role)
 
 	if role.models and role.fmodels then
 		local selfmodel
-	
+
 		if math.random(0, 1) == 0 then
 			selfmodel = role.fmodels
 		else
 			selfmodel = role.models
 		end
-	
+
 		local finalselfmodel = selfmodel[math.random(1, #selfmodel)]
-	
+
 		self:SetModel(finalselfmodel)
 	else
 		if role.models then
@@ -884,12 +905,12 @@ function mply:ApplyRoleStats(role)
 			HairModel = role["hairf"][math.random(1, #role["hairf"])]
 		end
 	end
- 
-    if HairModel then
+
+	if HairModel then
 		if self:GetRoleName() == "Medic" and !self:IsFemale() then return end
 		Bonemerge(HairModel,self)
 	end
-	
+
 	if isblack and self:GetModel():find("class_d") then
 		self:SetSkin(1)
 	end
@@ -1007,17 +1028,17 @@ function mply:ApplyRoleStats(role)
 
 	self:SetSlowWalkSpeed( self:GetWalkSpeed() - 40 )
 	self:SetLadderClimbSpeed(140)
-	
+
 	if self:GetRoleName() == "Class-D Fast" then
 		self:SetRunSpeed(231)
 	end
-	
+
 	if role.jumppower then
 		self:SetJumpPower(190 * (role.jumppower or 1))
     else
   		self:SetJumpPower(190)
 	end
-	
+
 	if role.stamina then 
 		self:SetStaminaScale(role.stamina)
 	end
@@ -1038,6 +1059,8 @@ function mply:ApplyRoleStats(role)
 	if self:GetRoleName() == "UIU Spy" and timer.Exists("RoundTime") then
 		UIUSpy_MakeDocuments(3)
 	end
+
+	self.voicePitch = math.random(90, 110)
 end
 
 function mply:SaveExp()

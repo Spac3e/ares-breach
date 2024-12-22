@@ -102,181 +102,130 @@ function GetActivePlayers()
 	return tab
 end
 
-surface.CreateFont( "SpectatorTimer", {
-	font = "Conduit ITC",
-	size = 28,
-	weight = 800,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = true,
-	additive = false,
-	outline = false,
-})
+local alpha = 255
+local alpha_ready = 255
+local prev_time_left = 0
+
+local function WaitingForPlayers()
+    local ply = LocalPlayer()
+    local screenwidth = ScrW()
+    local screenheight = ScrH()
+    local players_needed = 10 - #GetActivePlayers()
+    local gteam = ply:GTeam()
+    local time_left = math.Round(GetGlobalInt("EnoughPlayersCountDownStart", CurTime() + 180) - CurTime())
+
+    local dots = math.floor(CurTime() % 4)
+    local waiting_text = "Awaiting for players" .. string.rep(".", dots)
+
+    local padding = 10
+    local paddingy = 5
+    local font_height = draw.GetFontHeight("ScoreboardContent")
+    local total_height = font_height / 2
+
+    local y_base = screenheight - padding - total_height
+    local y_waiting = y_base - font_height + paddingy
+    local y_needed = y_base + paddingy
+
+    if gteam != TEAM_SPEC then
+        padding = BREACH.ScreenScale(ScrW()) + 130
+    end
+
+    if GetGlobalBool("EnoughPlayersCountDown", false) then
+        if time_left != prev_time_left then
+            alpha = 255
+            prev_time_left = time_left
+        end
+
+        alpha = Lerp(0.1, alpha, 255)
+        local countdown_text = "Round will begin in " .. time_left .. " seconds"
+
+        if time_left <= 10 then
+            local pulse = math.abs(math.sin(CurTime() * 2)) * 50 + 205
+            local x_center = screenwidth / 2
+            local y_center = screenheight / 2
+            draw.SimpleText(time_left, "LZTextBig", x_center, y_center, Color(255, 0, 0, pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        else
+            draw.SimpleText(countdown_text, "ScoreboardContent", padding, y_waiting, ColorAlpha(color_white, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			alpha_ready = math.abs(math.sin(CurTime() * 2)) * 50 + 205
+			draw.SimpleText("Ready to play", "ScoreboardContent", padding, y_needed, ColorAlpha(color_white, alpha_ready), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)	
+        end
+    else
+        draw.SimpleText(waiting_text, "ScoreboardContent", padding, y_waiting, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+        draw.SimpleText("Need " .. players_needed .. " more", "ScoreboardContent", padding, y_needed, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+
+        local pulse = math.abs(math.sin(CurTime() * 2)) * 50
+        draw.SimpleText(waiting_text, "ScoreboardContent", padding, y_waiting, ColorAlpha(color_white, pulse), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+    end
+end
 
 function GM:HUDPaint()
+    local client = LocalPlayer()
+    local current_team = LocalPlayer():GTeam()
+    local screenwidth = ScrW()
+    local screenheight = ScrH()
 
-  local client = LocalPlayer()
-  --[[
-  if ( client:Health() <= 0 ) then
+    if (current_team == TEAM_SPEC or current_team == TEAM_ARENA) or GetGlobalBool("AliveCanSeeRoundTime", false) then
+        if not (preparing or postround) and (cltime > 0 or GetGlobalBool("NukeTime", false)) then
+            local time = string.ToMinutesSeconds(cltime)
+            local col = color_white
+            if GetGlobalBool("NukeTime", false) then
+                col = Color(255, 0, 0)
+                if timer.Exists("NukeTimer") then
+                    time = string.ToMinutesSeconds(timer.TimeLeft("NukeTimer"))
+                else
+                    time = "!*:#$"
+                end
+            end
 
-    BREACH.EF.DrawDead();
+            draw.SimpleText(time, "SpectatorTimer", screenwidth / 2, screenheight * .1, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            surface.SetFont("SpectatorTimer")
+            local timer_w, timer_h = surface.GetTextSize(time)
+            draw.OutlinedBox(screenwidth / 2 - timer_w / 2 - 4, screenheight * .1 - (timer_h / 2) - 2, timer_w + 8, timer_h + 8, 2, roleclr1)
+        end
+    end
 
-  end
-  --]]
-  local current_team = LocalPlayer():GTeam()
-  local screenwidth = ScrW()
-  local screenheight = ScrH()
+    if not gamestarted then WaitingForPlayers() end
 
-  			if ( current_team == TEAM_SPEC or current_team == TEAM_ARENA ) or GetGlobalBool("AliveCanSeeRoundTime", false) then
-				if ( !( preparing || postround ) && ( cltime > 0 or GetGlobalBool("NukeTime", false) ) ) then
+    if BREACH.Nuked then
+        if CurTime() - BREACH.NukeStart <= 0.2 then --print( "yos" )
+            surface.SetDrawColor(255, 255, 255, 255 * math.Clamp((CurTime() - BREACH.NukeStart) * 5, 0, 1))
+        else
+            surface.SetDrawColor(255, 255, 255, 255 * (1 - math.Clamp(((CurTime() - BREACH.NukeStart) - 0.2) / 3, 0, 1)))
+        end
 
-					local time = string.ToMinutesSeconds( cltime )
-					local col = color_white
-					if GetGlobalBool("NukeTime", false) then
-						col = Color(255,0,0)
-						if timer.Exists("NukeTimer") then
-							time = string.ToMinutesSeconds( timer.TimeLeft("NukeTimer") )
-						else
-							time = "!*:#$"
-						end
-					end
-					draw.SimpleText( time, "SpectatorTimer", screenwidth / 2, screenheight * .1, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+        surface.DrawRect(0, 0, ScrW(), ScrH())
+    end
 
-					surface.SetFont( "SpectatorTimer" )
-					local timer_w, timer_h = surface.GetTextSize( time )
+    if BREACH.f_RoundStart then
+        if CurTime() - BREACH.f_RoundStart <= 10 then
+            if alpha < 255 then alpha = math.Approach(alpha, 255, FrameTime() * 256) end
+        else
+            if alpha > 0 then alpha = math.Approach(alpha, 0, FrameTime() * 512) end
+        end
 
-					draw.OutlinedBox( screenwidth / 2 - timer_w / 2 - 4, screenheight * .1 - ( timer_h / 2 ) - 2, timer_w + 8, timer_h + 8, 2, roleclr1 )
+        surface.SetDrawColor(0, 0, 0, alpha)
+        if CurTime() - BREACH.f_RoundStart > 15 then
+            BREACH.f_RoundStart = nil
+            alpha = 0
+        end
 
-				end
+        surface.DrawRect(0, 0, ScrW(), ScrH())
+    end
 
-			end
+    if client.IntroBlackOut then
+        if CurTime() - BREACH.NTFEnter <= .2 then
+            surface.SetDrawColor(0, 0, 0, 255 * math.Clamp((CurTime() - BREACH.NTFEnter) * 5, 0, 1))
+        else
+            surface.SetDrawColor(0, 0, 0, 255 * (1 - math.Clamp(((CurTime() - BREACH.NTFEnter) - 0.2) / 3, 0, 1)))
+        end
 
-	if ( gamestarted != true ) then
+        surface.DrawRect(0, 0, ScrW(), ScrH())
+    end
 
-		if ( !GetGlobalBool("EnoughPlayersCountDown", false) ) then
-
-			if ( client.MusicPlaying ) then
-
-				client.MusicPlaying = nil
-				StopMusic()
-
-			end
-
-			local middlescreen = ScrW() / 2
-			local screenheight_quarter = ScrH() / 4
-
-			draw.DrawText( "Waiting for players...", "LZTextBig", middlescreen, screenheight_quarter, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-			draw.DrawText( "Need " .. 10 - #GetActivePlayers() .. " more", "LZText", middlescreen, screenheight_quarter + 80, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		else
-
-			if ( !client.MusicPlaying && client:GetActive() ) then
-
-				client.MusicPlaying = true
-				BREACH.Music:Play( BR_MUSIC_COUNTDOWN )
-
-			end
-
-			local time_left = math.Round( GetGlobalInt("EnoughPlayersCountDownStart", CurTime() + 180) - CurTime() )
-
-			if ( time_left > 10 ) then
-
-				local middle_screen = ScrW() / 2
-				local screenheight = ScrH()
-
-				draw.DrawText( #GetActivePlayers() .. " players ready to go", "LZTextSmall", middle_screen, screenheight * .15, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-				local ltime = 720
-				if #GetActivePlayers() >= 20 then ltime = 840 end
-				draw.DrawText( "Current round time: " .. string.ToMinutesSeconds( ltime ), "LZTextSmall", middle_screen, screenheight * .18, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-				draw.DrawText( "Round will begin in " .. time_left, "LZText", middle_screen, screenheight * .26, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			else
-
-				draw.DrawText( time_left, "LZTextBig", ScrW() / 2, ScrH() / 2, ColorAlpha( Color(255,0,0), 180 * Fluctuate( 3 ) ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			end
-
-		end
-
-	end
-
-  if ( BREACH.Nuked ) then
-		--print( "yos" )
-		if ( CurTime() - BREACH.NukeStart <= 0.2 ) then
-
-			surface.SetDrawColor(255, 255, 255, 255 * math.Clamp( ( CurTime() - BREACH.NukeStart ) * 5, 0, 1) );
-
-		else
-
-			surface.SetDrawColor(255, 255, 255, 255 * ( 1 - math.Clamp( ( ( CurTime() - BREACH.NukeStart ) - 0.2) / 3, 0, 1) ) );
-
-		end
-
-		surface.DrawRect(0, 0, ScrW(), ScrH());
-	end
-
-	if ( BREACH.f_RoundStart ) then
-
-		if ( CurTime() - BREACH.f_RoundStart <= 10 ) then
-
-			if ( alpha < 255 ) then
-
-				alpha = math.Approach( alpha, 255, FrameTime() * 256 )
-
-			end
-
-		else
-
-			if ( alpha > 0 ) then
-
-				alpha = math.Approach( alpha, 0, FrameTime() * 512 )
-
-			end
-
-		end
-
-		surface.SetDrawColor( 0, 0, 0, alpha );
-
-		if ( CurTime() - BREACH.f_RoundStart > 15 ) then
-
-			BREACH.f_RoundStart = nil
-			alpha = 0
-
-		end
-
-		surface.DrawRect( 0, 0, ScrW(), ScrH() )
-
-	end
-
-	if ( client.IntroBlackOut ) then
-
-		if ( CurTime() - BREACH.NTFEnter <= .2 ) then
-
-			surface.SetDrawColor( 0, 0, 0, 255 * math.Clamp( ( CurTime() - BREACH.NTFEnter ) * 5, 0, 1 ) )
-
-		else
-
-			surface.SetDrawColor( 0, 0, 0, 255 * ( 1 - math.Clamp( ( (CurTime() - BREACH.NTFEnter ) - 0.2) / 3, 0, 1) ) );
-
-		end
-
-		surface.DrawRect( 0, 0, ScrW(), ScrH() );
-
-	end
-
-	if ( client.BlackScreen ) then
-
-		surface.SetDrawColor( color_black )
-		surface.DrawRect( 0, 0, ScrW(), ScrH() )
-
-	end
-
+    if client.BlackScreen then
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, ScrW(), ScrH())
+    end
 end
 
 local hide = {
@@ -364,141 +313,6 @@ local MATS = {
 	sprint = Material("hud_scp/sprinticon.png"),
 }
 
-surface.CreateFont( "TimeMisterFreeman", {
-	font = "B52",
-	extended = true,
-	size = 24,
-	antialias = true,
-	shadow = false
-})
-
-surface.CreateFont( "Buba", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 60,
-	weight = 900,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-surface.CreateFont( "Buba7", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 19,
-	weight = 300,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-surface.CreateFont( "Buba6", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 20,
-	weight = 500,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-
-surface.CreateFont( "Buba5", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 30,
-	weight = 500,
-	blursize = 0,
-	scanlines = 3,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-surface.CreateFont( "BubaChat", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 18,
-	weight = 500,
-	blursize = 0,
-	scanlines = 3,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-surface.CreateFont( "Buba55", {
-	font = "Lorimer No 2 Stencil", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 45,
-	weight = 500,
-	blursize = 0,
-	scanlines = 2,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
-surface.CreateFont( "Buba3", {
-	font = "Righteous", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = true,
-	size = 30,
-	weight = 400,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = false,
-	additive = false,
-	outline = false,
-} )
-
 local clr_red = Color( 255, 0, 0 )
 
 function Pulsate( c )
@@ -512,24 +326,6 @@ function Fluctuate( c )
   return ( math.cos( CurTime() * c ) + 1 ) * .5
 
 end
-
-surface.CreateFont( "Buba2", {
-	font = "LittleMerry", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	extended = false,
-	size = 48,
-	weight = 800,
-	blursize = 0,
-	scanlines = 0,
-	antialias = true,
-	underline = false,
-	italic = false,
-	strikeout = false,
-	symbol = false,
-	rotary = false,
-	shadow = true,
-	additive = false,
-	outline = false,
-} )
 
 function CreateKillFeed(data)
 
@@ -1904,38 +1700,6 @@ net.Receive("MVPMenu", function(len)
 
 end)
 
-surface.CreateFont( "HUDFontHead", {
-
-    font = "Bauhaus LT(RUS BY LYAJKA)",
-
-	size = 36,
-
-	weight = 100,
-
-	blursize = 0,
-
-	scanlines = 0,
-
-	antialias = true,
-
-	underline = false,
-
-	italic = false,
-
-	strikeout = false,
-
-	symbol = false,
-
-	rotary = false,
-
-	shadow = false,
-
-	additive = false,
-
-	outline = false,
-
-})
-
 --[[
 function DrawName( ply )
 
@@ -2470,24 +2234,6 @@ function Camera_View( ply )
 	  
 		CLOSE2225.FadeAlpha = 0
 
-		surface.CreateFont("MainMenuFont", {
-
-			font = "Conduit ITC",
-			size = 24,
-			weight = 800,
-			blursize = 0,
-			scanlines = 0,
-			antialias = true,
-			underline = false,
-			italic = false,
-			strikeout = false,
-			symbol = false,
-			rotary = false,
-			shadow = true,
-			additive = false,
-			outline = false
-		  
-		  })
 	  
 		CLOSE2225.Paint = function(self, w, h)
 	  
@@ -2618,20 +2364,6 @@ local scp_106_texts = {
 	"AGONY",
 	"IMPOSSIBLE",
 }
-
-surface.CreateFont( "SCP106_TEXT", {
-
-	font = "Segoe UI",--"Univers LT Std 47 Cn Lt",
-	size = 35,
-	weight = 0,
-	antialias = true,
-	extended = true,
-	shadow = false,
-	outline = true,
-	italic = true,
-	blursize = 1,
-  
-})
 
 local function CreateSCP106Text()
 
@@ -3047,7 +2779,7 @@ function CreateInspectPanel(ply)
 	local gteam = ply:GTeam()
 
 
-	local role_icon = GetRoleIconByTeam(ply:GTeam(), ply:GetRoleName())
+	local role_icon = GetRoleIconByTeam(ply:GTeam(), false)
 
 	INSPECT_PANEL.Paint = function(self, w, h)
 
@@ -3186,7 +2918,7 @@ function CreateInspectPanel(ply)
 
 	mdl.Entity:SetSequence(seq)
 
-	local tbl_bonemerged = ents.FindByClassAndParent( "ent_bonemerged", ply )
+	local tbl_bonemerged = ents.FindByClassAndParent( "breach_bonemerge", ply )
 
 	timer.Simple(0, function()
 

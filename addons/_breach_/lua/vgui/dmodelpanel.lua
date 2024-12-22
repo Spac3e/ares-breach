@@ -325,7 +325,7 @@ function PANEL:MakeZombie()
 		if !IsValid(bnmrg) then continue end
 		if bnmrg:GetModel():find("male_head_") or bnmrg:GetModel():find("balaclava") then
 			self.Entity.FaceTexture = "models/all_scp_models/zombies/shared/heads/head_1_1"
-			if CORRUPTED_HEADS[bnmrg:GetModel()] then
+			if sub_material_corrupted_models[bnmrg:GetModel()] then
 				bnmrg:SetSubMaterial(1, self.Entity.FaceTexture)
 			else
 				bnmrg:SetSubMaterial(0, self.Entity.FaceTexture)

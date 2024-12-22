@@ -8,7 +8,6 @@ util.AddNetworkString("BreachAnnouncerLoud")
 util.AddNetworkString("FirstPerson_Remove")
 util.AddNetworkString("DropAdditionalArmor")
 util.AddNetworkString("NTF_Intro")
-util.AddNetworkString("Eventmessage")
 util.AddNetworkString("breach_killfeed")
 util.AddNetworkString("Shaky_PARTICLEATTACHSYNC")
 
@@ -128,12 +127,6 @@ end
 
 function Player:setBottomMessage( msg )
     net.Start( "SetBottomMessage" )
-        net.WriteString( msg )
-    net.Send( self )
-end
-
-function Player:BrEventMessage( msg )
-    net.Start( "Eventmessage" )
         net.WriteString( msg )
     net.Send( self )
 end
@@ -455,6 +448,7 @@ function GM:PlayerDeath(victim, inflictor, attacker )
 	victim:SetSpecialMax(0)
 	victim:SetupHands()
 	victim:SetNWString("AbilityName", "")
+	victim:StopIgniteSequence()
 	victim.AbilityTAB = nil
 	victim.deathsequence = true
 	victim:SendLua("if BREACH.Abilities and IsValid(BREACH.Abilities.HumanSpecialButt) then BREACH.Abilities.HumanSpecialButt:Remove() end if BREACH.Abilities and IsValid(BREACH.Abilities.HumanSpecial) then BREACH.Abilities.HumanSpecial:Remove() end")

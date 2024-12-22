@@ -25,14 +25,6 @@ local render = render
 local util = util
 local math = math
 
-surface.CreateFont("UiBold", {
-    size = 16,
-    weight = 800,
-    antialias = true,
-    shadow = false,
-    font = "Verdana"
-})
-
 BREACH.observer.dimDistance = 1024
 BREACH.observer.fullbright = true
 BREACH.observer.enabled = true

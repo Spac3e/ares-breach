@@ -32,52 +32,6 @@ local player = player
 -- Stacker table.
 local TipPanels = {}
 
-local clr_message = Color( 198, 198, 198 )
-
-net.Receive("Eventmessage", function( len )
-
-  local client = LocalPlayer()
-
-  if ( IsValid( client.msgEvent ) ) then return end
-
-  local msg = net.ReadString()
-
-  surface.SetFont( "BrSoul20" )
-
-  local msg1sizew, msg1sizeh = surface.GetTextSize( msg )
-
-  client.msgEvent = vgui.Create( "DFrame" )
-  client.msgEvent:SetPos( ( ScrW() / 2 - ( msg1sizew / 2 ) ), ( ScrH() / 1.3 ) )
-  client.msgEvent:SetSize( msg1sizew + 8, msg1sizeh )
-  client.msgEvent:SetTitle( "" )
-  client.msgEvent.Active = RealTime() + 6
-  client.msgEvent.Alpha = 0
-  client.msgEvent:ShowCloseButton( false )
-  client.msgEvent.Paint = function( self )
-
-    if ( self.Active > RealTime() ) then
-
-      self.Alpha = math.Approach( self.Alpha, 255, RealFrameTime() * 256 )
-
-    else
-
-      self.Alpha = math.Approach( self.Alpha, 0, RealFrameTime() * 512 )
-
-      if ( self.Alpha == 0 ) then
-
-        self:Remove()
-        client.msgEvent = nil
-
-      end
-
-    end
-
-    draw.SimpleText( msg, "BrSoul20", 2, 2, ColorAlpha( clr_message, self.Alpha ), TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT )
-
-  end
-
-end)
-
 local UpdateDelay = 0
 
 net.Receive( "TipSend", function()
@@ -108,12 +62,6 @@ end)
 local boxclr = Color( 48, 49, 54, 155 )
 local maticon = Material( "nextoren/gui/icons/notifications/breachiconfortips.png" )
 
-surface.CreateFont( "Cyb_HudTEXT",
-{
-  font = "Segoe UI",
-  size = 25,
-  weight = 550,
-})
 local UpdateDelay = 0
 
 net.Receive( "Shaky_TipSend", function()

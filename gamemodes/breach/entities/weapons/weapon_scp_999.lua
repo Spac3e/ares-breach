@@ -280,7 +280,7 @@ function SWEP:DrawHUDBackground()
       col = Color(239, 114, 19)
     end
     --draw.SimpleTextOutlined(string Text, string font = "DermaDefault", number x = 0, number y = 0, table color = Color( 255, 255, 255, 255 ), number xAlign = TEXT_ALIGN_LEFT, number yAlign = TEXT_ALIGN_TOP, number outlinewidth, table outlinecolor = Color( 255, 255, 255, 255 ))
-    draw.SimpleTextOutlined("HEALTH: "..health..'%', "HUDFontMedium", w/2, h/2, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, col_black)
+    draw.SimpleTextOutlined("HEALTH: "..health..'%', "HUDFontTitle", w/2, h/2, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, col_black)
   end
 
 end

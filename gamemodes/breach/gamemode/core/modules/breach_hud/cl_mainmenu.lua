@@ -25,27 +25,6 @@ concommand.Add("debug_reset_mainmenu", function()
     ShowMainMenu = false
 end)
 
-surface.CreateFont("dev_desc", {
-    font = "Univers LT Std 47 Cn Lt",
-    size = 16,
-    weight = 0,
-    antialias = true,
-    italic = false,
-    extended = true,
-    shadow = false,
-    outline = false,
-})
-
-surface.CreateFont("dev_name", {
-    font = "Univers LT Std 47 Cn Lt",
-    size = 21,
-    weight = 0,
-    antialias = true,
-    extended = true,
-    shadow = false,
-    outline = false,
-})
-
 function draw.RotatedText(text, x, y, font, color, ang)
     render.PushFilterMag(TEXFILTER.ANISOTROPIC)
     render.PushFilterMin(TEXFILTER.ANISOTROPIC)
@@ -62,70 +41,12 @@ function draw.RotatedText(text, x, y, font, color, ang)
     render.PopFilterMin()
 end
 
-function createdonationmenu()
-    if IsValid(MAIN_MENU_DERMA_DONATE) then MAIN_MENU_DERMA_DONATE:Remove() end
-    if IsValid(INTRO_PANEL.donate) then
-        INTRO_PANEL.donate:AlphaTo(0, 1, 0, function()
-            INTRO_PANEL.donate:Remove()
-            INTRO_PANEL.donate = nil
-        end)
-        return
-    end
-
-    local creditspanel = vgui.Create("DScrollPanel", INTRO_PANEL)
-    local sbar = creditspanel:GetVBar()
-    function sbar:Paint(w, h)
-    end
-
-    function sbar.btnUp:Paint(w, h)
-    end
-
-    function sbar.btnDown:Paint(w, h)
-    end
-
-    function sbar.btnGrip:Paint(w, h)
-        surface.SetDrawColor(color_white)
-        surface.SetMaterial(grad2)
-        surface.DrawTexturedRect(0, 0, w - 3, h / 2)
-        surface.SetMaterial(grad1)
-        surface.DrawTexturedRect(0, h / 2, w - 3, h / 2)
-    end
-
-    INTRO_PANEL.donate = creditspanel
-    INTRO_PANEL.donate:SetAlpha(0)
-    INTRO_PANEL.donate:SetSize(400, 400)
-    INTRO_PANEL.donate:Center()
-    INTRO_PANEL.donate:AlphaTo(255, 1)
-    INTRO_PANEL.donate.Paint = function(self, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, dark_clr)
-        DrawBlurPanel(INTRO_PANEL.donate)
-        surface.SetDrawColor(color_white)
-        surface.SetMaterial(grad2)
-        surface.DrawTexturedRect(0, 0, 3, h / 2)
-        surface.DrawTexturedRect(w - 3, 0, 3, h / 2)
-        surface.SetMaterial(grad1)
-        surface.DrawTexturedRect(0, h / 2, 3, h / 2)
-        surface.DrawTexturedRect(w - 3, h / 2, 3, h / 2)
-        INTRO_PANEL.donate:MakePopup()
-    end
-
-    for i = 1, #donation_list do
-        local data = donation_list[i]
-        local label = vgui.Create("DLabel", creditspanel)
-        label:Dock(TOP)
-        label:SetSize(0, 20)
-        label:SetFont("ChatFont_new")
-        label:SetText("  " .. data.category)
-    end
-end
-
 local button_lang = {
     play = "l:menu_play",
     resume = "l:menu_resume",
     disconnect = "l:menu_disconnect",
     credits = "l:menu_credits",
     settings = "l:menu_settings",
-    donate = "l:menu_donate",
     wiki = "l:menu_wiki",
     rules = "l:menu_my_life_my_rules",
 }
@@ -134,40 +55,6 @@ local function get_button_lang(str)
     return L(button_lang[str]) --["english"]
 end
 
-surface.CreateFont("MainMenuFont", {
-    font = "Conduit ITC",
-    size = 24,
-    weight = 800,
-    blursize = 0,
-    scanlines = 0,
-    antialias = true,
-    underline = false,
-    italic = false,
-    strikeout = false,
-    symbol = false,
-    rotary = false,
-    shadow = true,
-    additive = false,
-    outline = false
-})
-
-surface.CreateFont("MainMenuFontmini", {
-    font = "Conduit ITC",
-    size = 26,
-    weight = 800,
-    blursize = 0,
-    scanlines = 0,
-    antialias = true,
-    underline = false,
-    italic = false,
-    strikeout = false,
-    symbol = false,
-    rotary = false,
-    shadow = true,
-    additive = false,
-    outline = false
-})
-
 BREACH = BREACH or {}
 ShowMainMenu = ShowMainMenu or false
 local clr1 = Color(128, 128, 128)
@@ -175,12 +62,6 @@ local whitealpha = Color(255, 255, 255, 90)
 local clrblackalpha = Color(0, 0, 0, 220)
 local Material_To_Check = {"nextoren_hud/overlay/frost_texture", "weapons/weapon_flashlight", "cultist/door_1", "models/balaclavas/balaclava", "models/cultist/heads/zombie_face", "models/all_scp_models/shared/arms_new", "nextoren/gui/special_abilities/special_fbi_commander.png", "models/breach_items/ammo_box/ammocrate_smg1"}
 local desc_premium = BREACH.TranslateString"l:menu_desc_premium"
-
-local donatelist = {}
-
-donatelist.discount = 0
-
-donatelist.Info = "Теперь оплата происходит в донат-меню, напишите в чат !donate"
 
 local function CreateMainMenuQuery(text, str1, func1, str2, func2)
     if IsValid(INTRO_PANEL.credits) then INTRO_PANEL.credits:Remove() end
@@ -550,13 +431,6 @@ function StartBreach(firsttime)
             end,
         },
         {
-            name = "donate",
-            func = function()
-                OpenDonateMenu()
-                surface.PlaySound("nextoren/gui/main_menu/main_menu_select_1.wav")
-            end,
-        },
-        {
             name = "rules",
             func = function()
                 INTRO_PANEL:OpenUrl("https://book.vaultcommunity.net/books/arkhiv/page/pravila-servera-breach")
@@ -696,7 +570,6 @@ function StartBreach(firsttime)
             surface.SetFont(font)
             local text = get_button_lang(but_data.name)
             if but_data.notfirsttime_name and not FIRSTTIME_MENU then text = get_button_lang(but_data.notfirsttime_name) end
-            if donatelist.discount > 0 and but_data.name == "donate" then text = text .. BREACH.TranslateString"l:menu_discount %" .. donatelist.discount .. ")" end
             local text_length = surface.GetTextSize(text)
             if self:IsHovered() then --draw.RoundedBox(0, 10, h-2, text_length*button.lerp, 2, color_white)
                 draw.DrawText(">", font, 10, 0, ColorAlpha(color_white, 115 + (140 * (button.lerp * 3))))
@@ -1363,82 +1236,6 @@ BREACH.Options = {
         }
     }
 }
-
-local TEXTENTRY_FRAME
-surface.CreateFont("donate_text", {
-    font = "Univers LT Std 47 Cn Lt",
-    size = 25,
-    weight = 0,
-    antialias = true,
-    extended = true,
-    shadow = false,
-    outline = false,
-})
-
-function OpenDonateMenu()
-  local scrw, scrh = ScrW(), ScrH()
-  if IsValid(INTRO_PANEL.settings_frame) then
-      INTRO_PANEL.settings_frame:AlphaTo(0, 1, 0, function()
-          INTRO_PANEL.settings_frame:Remove()
-          INTRO_PANEL.settings_frame = nil
-      end)
-      return
-  end
-
-  local settings_frame = vgui.Create("DPanel", INTRO_PANEL)
-  INTRO_PANEL.settings_frame = settings_frame
-  INTRO_PANEL.settings_frame:SetSize(scrw * .6, scrh * .6)
-  INTRO_PANEL.settings_frame:Center()
-  settings_frame:SetAlpha(0)
-  settings_frame:AlphaTo(255, 1)
-  settings_frame.Paint = function(self, w, h)
-      draw.RoundedBox(0, 0, 0, w, h, dark_clr)
-      DrawBlurPanel(self)
-      surface.SetDrawColor(color_white)
-      surface.SetMaterial(grad2)
-      surface.DrawTexturedRect(0, 0, 3, h / 2)
-      surface.DrawTexturedRect(w - 3, 0, 3, h / 2)
-      surface.SetMaterial(grad1)
-      surface.DrawTexturedRect(0, h / 2, 3, h / 2)
-      surface.DrawTexturedRect(w - 3, h / 2, 3, h / 2)
-  end
-
-  local w, h = settings_frame:GetSize()
-  local list = vgui.Create("DScrollPanel", settings_frame)
-  list:SetSize(w * .3, h)
-  list:SetX(10)
-  local sbar = list:GetVBar()
-  function sbar:Paint(w, h)
-  end
-
-  function sbar.btnUp:Paint(w, h)
-  end
-
-  function sbar.btnDown:Paint(w, h)
-  end
-
-  function sbar.btnGrip:Paint(w, h)
-      surface.SetDrawColor(color_white)
-      surface.SetMaterial(grad2)
-      surface.DrawTexturedRect(6, 0, 6, h / 2)
-      surface.SetMaterial(grad1)
-      surface.DrawTexturedRect(6, h / 2, 6, h / 2)
-  end
-
-  local contacts = vgui.Create("DPanel", settings_frame)
-  contacts:SetPos(0, settings_frame:GetTall() / 2)
-  contacts:SetSize(settings_frame:GetWide(), settings_frame:GetTall() / 2)
-  contacts.Paint = function(self, w, h)
-    surface.SetDrawColor(color_white)
-    surface.SetMaterial(gradient2)
-    surface.DrawTexturedRect(w/2, 25, w/2, 3)
-    surface.SetMaterial(gradient)
-    surface.DrawTexturedRect(0, 25, w/2, 3)
-
-    draw.SimpleText(donatelist.Info, "donate_text", w/4, 0, color_white)
-  end
-
-end
 
 function OpenConfigMenu()
     local scrw, scrh = ScrW(), ScrH()

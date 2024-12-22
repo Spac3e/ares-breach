@@ -96,8 +96,6 @@ function UpdateAll()
         count = count + 1
         font:Update()
     end
-
-    print( "All %d fonts have been updated!" ..count )
 end
 
 hook.Add( "OnScreenSizeChanged", "ScreenSizeChanged", UpdateAll )

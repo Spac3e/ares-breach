@@ -118,12 +118,13 @@ function PANEL:ApplySchemeSettings()
 
 end
 
-function PANEL:Think()
+function PANEL:AutoStretchVerticalThink()
+	self:SizeToContentsY()
+end
 
-	if ( self:GetAutoStretchVertical() ) then
-		self:SizeToContentsY()
-	end
-
+function PANEL:SetAutoStretchVertical(enable)
+	self.m_bAutoStretchVertical = enable
+	self.Think = enable and self.AutoStretchVerticalThink or nil
 end
 
 function PANEL:PerformLayout()

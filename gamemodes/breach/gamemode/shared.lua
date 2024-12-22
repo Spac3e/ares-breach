@@ -43,10 +43,7 @@ TEAM_ARENA = 19
 TEAM_SPEC = 20
 
 -- Include core framework files.
-BREACH.IncludeDir("core/hooks/")
 BREACH.IncludeDir("core/libs/")
-BREACH.Include("core/cl_core.lua")
-BREACH.Include("core/sv_core.lua")
 if (SERVER) then AddCSLuaFile( "core/modules/breach_module/cl_module.lua" ) AddCSLuaFile( "core/modules/breach_module/sh_module.lua" ) include( "core/modules/breach_module/sv_module.lua" ) include( "core/modules/breach_module/sh_module.lua") else include( "core/modules/breach_module/cl_module.lua" ) include( "core/modules/breach_module/sh_module.lua" ) end
 AddCSLuaFile( "core/modules/breach_ui/music.lua" )
 include("core/modules/breach_ui/music.lua")

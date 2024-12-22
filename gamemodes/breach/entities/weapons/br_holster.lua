@@ -42,7 +42,7 @@ if SERVER then
         local selftable = self:GetTable()
         if selftable.Drag and (not owner:KeyDown(IN_ATTACK) or not IsValid(selftable.Drag.Entity)) then
             local ent = self.Drag.Entity
-            if IsValid(ent) then timer.Create('RemoveOwner_' .. ent:EntIndex(), 30, 1, function() ent:SetNWEntity('PlayerCarrying', nil) end) end
+            if IsValid(ent) then timer.Create('RemoveOwner_' .. ent:EntIndex(), 30, 1, function() if IsValid(ent) then ent:SetNWEntity('PlayerCarrying', nil) end end) end
             selftable.Drag = nil
         end
 

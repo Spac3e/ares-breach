@@ -1,29 +1,31 @@
 local PMETA = FindMetaTable( "Player" )
 
-PMETA.old_getshootpos = PMETA.old_getshootpos || PMETA.GetShootPos
+do -- лютый перф апдейт только в новой версии
+  PMETA.old_getshootpos = PMETA.old_getshootpos || PMETA.GetShootPos
 
-PMETA.old_eyepos = PMETA.old_eyepos || PMETA.EyePos
+  PMETA.old_eyepos = PMETA.old_eyepos || PMETA.EyePos
 
-function PMETA:GetShootPos()
+  function PMETA:GetShootPos()
 
-  local offset = Vector( 0, self:GetNW2Int( "LeanOffset" ), 0 )
-  offset:Rotate( self:EyeAngles() )
+    local offset = Vector( 0, self:GetNW2Int( "LeanOffset" ), 0 )
+    offset:Rotate( self:EyeAngles() )
 
-  local _, result = pcall( self.old_getshootpos, self )
+    local _, result = pcall( self.old_getshootpos, self )
 
-  return result - offset
+    return result - offset
 
-end
+  end
 
-function PMETA:EyePos()
+  function PMETA:EyePos()
 
-  local offset = Vector( 0, self:GetNW2Int( "LeanOffset" ), 0 )
-  offset:Rotate( self:EyeAngles() )
+    local offset = Vector( 0, self:GetNW2Int( "LeanOffset" ), 0 )
+    offset:Rotate( self:EyeAngles() )
 
-  local _, result = pcall( self.old_eyepos, self )
+    local _, result = pcall( self.old_eyepos, self )
 
-  return result - offset
+    return result - offset
 
+  end
 end
 
 local function Angle_Offset( new, old )

@@ -7,6 +7,10 @@ local stomach_hit = {
     --[HITGROUP_RIGHTARM] = true
 }
 
+HITGROUP_DICK = 11
+HITGROUP_SPINE = 12
+HITGROUP_HEART = 13
+
 AR2_AMMO = "AR2"
 AR2_AMMO_2 = "7.62x39MM"
 SMG1_AMMO = "SMG1"
@@ -40,8 +44,8 @@ function GM:ScalePlayerDamage(ply, hitgroup, dmginfo)
     local plypos = ply:GetPos()
     local distsqr = attackerpos:DistToSqr(plypos)
     local damagedrop = 0
-	
-    if IsValid(attacker) and attacker:IsPlayer() then
+
+	if IsValid(attacker) and attacker:IsPlayer() then
 		local wep = attacker:GetActiveWeapon()
 		local ammo = wep.Primary.Ammo or ""
 

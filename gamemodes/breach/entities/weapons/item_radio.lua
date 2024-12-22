@@ -205,24 +205,6 @@ if ( CLIENT ) then
 	SWEP.BounceWeaponIcon = false
 	SWEP.InvIcon = Material( "nextoren/gui/icons/radio.png" )
 	SWEP.TextureBin = surface.GetTextureID( "effects/combine_binocoverlay" )
-	
-	surface.CreateFont( "RadioOFFONFont", {
-		font = "brradiofont",
-		extended = false,
-		size = 36,
-		weight = 200,
-		blursize = 0,
-		scanlines = 0,
-		antialias = true,
-		underline = false,
-		italic = false,
-		strikeout = false,
-		symbol = false,
-		rotary = false,
-		shadow = false,
-		additive = false,
-		outline = false,
-	} )
 
 	function SWEP:PostDrawViewModel( vm, weapon, ply )
 

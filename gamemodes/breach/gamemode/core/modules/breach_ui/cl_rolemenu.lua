@@ -32,30 +32,6 @@ local net = net
 local player = player
 local blur = Material("pp/blurscreen")
 
-surface.CreateFont( "JuneFont", {
-
-	font = "Junegull",
-	size = 16,
-	weight = 500,
-	antialias = true,
-	  extended = true,
-	shadow = false,
-	outline = false
-  
-})
-
-surface.CreateFont( "rolemenu_desc", {
-
-	font = "Univers LT Std 47 Cn Lt",
-	size = 20,
-	weight = 500,
-	antialias = true,
-	  extended = true,
-	shadow = false,
-	outline = false
-  
-})
-
 ROLEMENU = ROLEMENU || {}
 
 local faction_switched = nil
@@ -769,7 +745,7 @@ end
 				surface.DrawTexturedRect( 0, 0, 100, 100 )
 			end
 			faction_title.Paint = function( self, w, h )
-				draw.SimpleText( faction_table[ i ].name, "JuneFont", w / 2, h / 1.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+				draw.SimpleText( faction_table[ i ].name, "JuneFont", w / 2, h / 1.35, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 			end
 
 			BREACH.FactionInformation.Roles.ActualMenu = vgui.Create( "DPanel", BREACH.FactionInformation.Roles )

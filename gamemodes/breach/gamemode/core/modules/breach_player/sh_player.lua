@@ -568,8 +568,14 @@ local function DrawNewInventory(notvictim, vtab, ammo)
     local surv = BREACH.Inventory.Survivor
     surv:SetSize(300, 550)
     surv:SetPos(10, 40)
+    surv:SetCursor("hand")
+
+    local linecol = Color(255, 255, 255, 255)
+    local linealpha = 255
+
     surv.PaintOver = function(self, w, h)
-        surface.SetDrawColor(color_white)
+        linecol.a = Lerp(FrameTime() * 10, linecol.a, linealpha)
+        surface.SetDrawColor(linecol)
         surface.DrawOutlinedRect(0, 0, w, h, 1)
     end
 
@@ -588,6 +594,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
     end
 
     surv:SetFOV(25)
+
     local vec = Vector(0, 0, -8)
     local seq = surv.Entity:LookupSequence("l4d_idle_calm_frying_pan")
     local nextblink = SysTime() + math.Rand(0.1, 1)
@@ -596,7 +603,6 @@ local function DrawNewInventory(notvictim, vtab, ammo)
     local gesturelist = {"hg_chest_twistL", "HG_TURNR", "HG_TURNL"}
     local nextgesture = SysTime() + math.Rand(0.1, 1)
     local mousex, mousey = gui.MousePos()
-    surv.Angles = Angle(0, 56, 0)
     local blinkback = false
     local blinklerp = 0
     local doblink = false
@@ -610,20 +616,31 @@ local function DrawNewInventory(notvictim, vtab, ammo)
     local headang = Angle(0, 0, 0)
     local headid = surv.Entity:LookupBone("ValveBiped.Bip01_Head1")
     local headid2 = surv.Entity:LookupBone("ValveBiped.Bip01_Neck1")
+
+    surv.Angles = Angle(0, 56, 0)
+    surv.Pressed = false
+
     surv.LayoutEntity = function(self, ent)
+        if self.Pressed then
+            local mx, my = input.GetCursorPos()
+            self.Angles = self.Angles - Angle(0, ((self.DragX or mx) - mx) / 2, 0)
+
+            self.DragX, self.DragY = mx, my
+        end
+
         ent:SetPos(vec)
         ent:SetAngles(self.Angles)
         if IsValid(self.headply) and IsValid(self.headpanel) then
             self.headpanel:SetSubMaterial(0, self.headply:GetSubMaterial(0))
             self.headpanel:SetSubMaterial(1, self.headply:GetSubMaterial(1))
         end
-
+    
         if nextgesture <= SysTime() then
             ent:SetLayerSequence(0, ent:LookupSequence(gesturelist[math.random(1, #gesturelist)]))
             ent:SetLayerCycle(0.4)
             nextgesture = SysTime() + math.Rand(0.1, 5.5)
         end
-
+    
         if SysTime() >= nextblink and not doblink and IsValid(blink_tar) then
             nextblink = SysTime() + math.Rand(0.5, 2.6)
             blinkback = false
@@ -631,7 +648,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
             doblink = true
             blink_speed = math.Rand(7, 10)
         end
-
+    
         if nextlookaround <= SysTime() and not lookingaround then lookingaround = true end
         if lookingaround then
             if lookaroundendtime <= SysTime() and not waitbegin then
@@ -649,7 +666,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
                     nextlookaround = SysTime() + math.Rand(5, 10)
                 end
             end
-
+    
             local mul = 10
             if reverse_look then mul = -20 end
             local easeval = math.ease.OutQuint(lookaround_val)
@@ -658,32 +675,49 @@ local function DrawNewInventory(notvictim, vtab, ammo)
             ent:ManipulateBoneAngles(headid, headang)
             ent:ManipulateBoneAngles(headid2, Angle(0, 0, (easeval * .4) * mul))
         end
-
+    
         if doblink and blink_id then
             if blinkback then
                 blinklerp = math.Approach(blinklerp, 0, FrameTime() * blink_speed)
             else
                 blinklerp = math.Approach(blinklerp, 1, FrameTime() * blink_speed)
             end
-
+    
             if blinklerp == 1 then blinkback = true end
             blink_tar:SetFlexWeight(blink_id, blinklerp)
             if blinkback and blinklerp == 0 then doblink = false end
         end
-
+    
         if ent:GetCycle() == 1 then ent:SetCycle(0) end
         ent:SetCycle(math.Approach(ent:GetCycle(), 1, 0.00039172791875899))
     end
 
-    surv:SetCursor("arrow")
+    surv.DragMousePress = function(self)
+        self.DragX, self.DragY = input.GetCursorPos()
+        self.Pressed = true
+    end
+
+    surv.DragMouseRelease = function(self)
+        self.Pressed = false
+    end
+
+    surv.OnCursorEntered = function()
+        linealpha = 0
+    end
+
+    surv.OnCursorExited = function()
+        linealpha = 255
+    end
+    
     surv.Entity:ManipulateBoneAngles(surv.Entity:LookupBone("ValveBiped.Bip01_R_UpperArm"), Angle(5, 0, 0))
     surv.Entity:ManipulateBoneAngles(surv.Entity:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(-2, 0, 0))
     surv.Entity:ResetSequence(seq)
+
     if notvictim then
         for i = 0, ply:GetNumBodyGroups() do
             surv.Entity:SetBodygroup(i, ply:GetBodygroup(i))
         end
-
+    
         for _, bonemerge in pairs(client:LookupBonemerges()) do
             if not IsValid(bonemerge) then continue end
             local head
@@ -692,12 +726,12 @@ local function DrawNewInventory(notvictim, vtab, ammo)
             else
                 head = surv:BoneMerged(bonemerge:GetModel(), bonemerge:GetSubMaterial(0), bonemerge:GetInvisible(), bonemerge:GetSkin())
             end
-
+    
             if bonemerge:GetModel():find('male_head') then
                 surv.headply = bonemerge
                 surv.headpanel = head
             end
-
+    
             for i = 0, 3 do
                 head:SetBodygroup(i, bonemerge:GetBodygroup(i))
             end
@@ -706,7 +740,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
         for i = 0, vtab.Entity:GetNumBodyGroups() do
             surv.Entity:SetBodygroup(i, vtab.Entity:GetBodygroup(i))
         end
-
+    
         for _, bonemerge in pairs(vtab.Entity:LookupBonemerges()) do
             if not IsValid(bonemerge) then continue end
             local head
@@ -715,13 +749,13 @@ local function DrawNewInventory(notvictim, vtab, ammo)
             else
                 head = surv:BoneMerged(bonemerge:GetModel(), bonemerge:GetSubMaterial(0), bonemerge:GetInvisible(), bonemerge:GetSkin())
             end
-
+    
             for i = 0, 3 do
                 head:SetBodygroup(i, bonemerge:GetBodygroup(i))
             end
         end
     end
-
+    
     if surv.Entity.BoneMergedEnts then
         for _, bnm in pairs(surv.Entity.BoneMergedEnts) do
             local mdl = bnm:GetModel()
@@ -733,7 +767,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
     else
         if client:GetModel():find("scp_special") or mouth_allowed_playermodels[client:GetModel()] then blink_tar = surv.Entity end
     end
-    
+
     local clr_hovered = Color(255, 215, 0)
     local clr_selected = Color(0, 255, 0)
     local clr_button = Color(255, 255, 255)
@@ -1162,6 +1196,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
         surface.DrawTexturedRect(0, 0, w, h)
         surface.SetDrawColor(color_white)
         surface.DrawOutlinedRect(0, 0, w, h, 1)
+        
         if client:Health() <= 0 or client:IsFrozen() or client.StartEffect or not vgui.CursorVisible() or client:GTeam() == team_spec_index or client.MovementLocked and not vtab then
             HideEQ()
             return

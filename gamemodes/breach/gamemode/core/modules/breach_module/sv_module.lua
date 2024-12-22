@@ -83,15 +83,33 @@ function AlphaWarheadBoomEffect()
 	net.Broadcast()
 end
 
-net.Receive("GiveWeaponFromClient", function(len,ply)
-	if ply:GetRoleName() != "SCP062DE" then
-		return
-	end
-	
-	local weapon = net.ReadString()
-	ply:Give(weapon)
-	ply:SelectWeapon(weapon)
+local weapons_table = {
+	"cw_kk_ins2_doi_mp40",
+	"cw_kk_ins2_doi_k98k",
+	"cw_kk_ins2_doi_g43"
+}
+
+net.Receive("GiveWeaponFromClient", function(len, ply)
+    if not IsValid(ply) or ply:GetRoleName() ~= "SCP062DE" then
+        return
+    end
+
+    local weapon = net.ReadString()
+
+    if not weapons_table[weapon] then
+        return
+    end
+
+    if ply:HasWeapon(weapon) then
+        return
+    end
+
+    ply:Give(weapon)
+    ply:SelectWeapon(weapon)
+
+	ply.weaponfromclient = true
 end)
+
 
 function mply:PlayGestureSequence( sequence )
 	local sequencestring = self:LookupSequence( sequence )
@@ -224,175 +242,36 @@ timer.Create("EffectTimer", 0.3, 0, function()
 	end
 end )
 
-function GetPocketPos()
-	if istable( POS_POCKETD ) then
-		return table.Random( POS_POCKETD )
-	else
-		return POS_POCKETD
-	end
-end
-	
-SCP914InUse = false
+function GM:GetFallDamage(ply, speed)
+    local dmg = speed / 8
+    local ground = ply:GetGroundEntity()
 
-function Use914( ent )
-	if SCP914InUse then return false end
-	SCP914InUse = true
-
-	if SCP_914_BUTTON and ent:GetPos() != SCP_914_BUTTON then
-		for k, v in pairs( ents.FindByClass( "func_door" ) ) do
-			if v:GetPos() == SCP_914_DOORS[1] or v:GetPos() == SCP_914_DOORS[2] then
-				v:Fire( "Close" )
-				timer.Create( "914DoorOpen"..v:EntIndex(), 15, 1, function()
-					v:Fire( "Open" )
-				end )
-			end
-		end
+    if ground:IsPlayer() then
+		ground:TakeDamage(ply:GetRoleName() == "Class-D Fat" and dmg * 10 or dmg * 1.65, ply, ply)
 	end
 
-	local button = ents.FindByName( SCP_914_STATUS )[1]
-	local angle = button:GetAngles().roll
-	local mode = 0
+    ply:EmitSound("nextoren/charactersounds/hurtsounds/fall/pldm_fallpain0" .. math.random(1, 2) .. ".wav")
 
-	if angle == 45 then
-		mode = 1
-	elseif	angle == 90 then
-		mode = 2
-	elseif	angle == 135 then
-		mode = 3
-	elseif	angle == 180 then
-		mode = 4
-	end
-	
-	timer.Create( "SCP914UpgradeEnd", 16, 1, function()
-		SCP914InUse = false
-	end )
-
-	timer.Create( "SCP914Upgrade", 10, 1, function() 
-		local items = ents.FindInBox( SCP_914_INTAKE_MINS, SCP_914_INTAKE_MAXS )
-		for k, v in pairs( items ) do
-			if IsValid( v ) then
-				if v.HandleUpgrade then
-					v:HandleUpgrade( mode, SCP_914_OUTPUT )
-				elseif v.betterone or v.GetBetterOne then
-					local item_class
-					if v.betterone then item_class = v.betterone end
-					if v.GetBetterOne then item_class = v:GetBetterOne( mode ) end
-
-					local item = ents.Create( item_class )
-					if IsValid( item ) then
-						v:Remove()
-						item:SetPos( SCP_914_OUTPUT )
-						item:Spawn()
-						WakeEntity( item )
-					end
-				end
-			end
-		end
-	end )
-
-	return true
-end
-
-function BroadcastDetection( ply, tab )
-	local transmit = { ply }
-	local radio = ply:GetWeapon( "item_radio" )
-
-	if radio and radio.Enabled and radio.Channel > 4 then
-		local ch = radio.Channel
-
-		for k, v in player.Iterator() do
-			if v:GTeam() != TEAM_SCP and v:GTeam() != TEAM_SPEC and v != ply then
-				local r = v:GetWeapon( "item_radio" )
-
-				if r and r.Enabled and r.Channel == ch then
-					table.insert( transmit, v )
-				end
-			end
-		end
-	end
-
-	local info = {}
-
-	for k, v in pairs( tab ) do
-		table.insert( info, {
-			name = v:GetRoleName(),
-			pos = v:GetPos() + v:OBBCenter()
-		} )
-	end
-
-	net.Start( "CameraDetect" )
-		net.WriteTable( info )
-	net.Send( transmit )
-end
-
-function GM:GetFallDamage(player, speed)
-	local dmg = (speed / 8)
-
-	player:EmitSound("nextoren/charactersounds/hurtsounds/fall/pldm_fallpain0"..math.random(1,2)..".wav")
-
-	return dmg
+    return dmg
 end
 
 function GM:PlayerDeathSound(ply)
-    if ply:GTeam() == TEAM_SCP then return true end
-
-	if ply:GTeam() == TEAM_GOC and ply:GetRoleName() != "GOC Spy" then
-		if ply:GetRoleName() == "GOC Soldier" then
-			ply:EmitSound("nextoren/vo/goc/grunt/die_0" .. math.random(1, 9) .. ".wav")
-		elseif ply:GetRoleName() == "GOC Commander" then
-		    ply:EmitSound("nextoren/vo/goc/cmd/die_0" .. math.random(1, 9) .. ".wav")
-	    elseif ply:GetRoleName() == "GOC Juggernaut" then
-		    ply:EmitSound("nextoren/vo/goc/jug/die_0" .. math.random(1, 9) .. ".wav")
-	    else
-		    ply:EmitSound("nextoren/vo/goc/spec/die_0" .. math.random(1, 9) .. ".wav")
-		end
-		return true
-	end
-
-    if !ply:IsFemale() then
-	    ply:EmitSound( "nextoren/charactersounds/hurtsounds/male/death_"..math.random(1,58)..".mp3", math.random( 70, 126 ) )
-	end
-
-	if ply:IsFemale() then
-		ply:EmitSound( "nextoren/charactersounds/hurtsounds/sfemale/death_"..math.random(1,75)..".mp3", math.random( 70, 126 ) )
-	end
-
     return true
 end
 
 function GM:PlayerHurt(victim, attacker, health, damage)
-    if victim:GTeam() == TEAM_SCP then return end
-    if !((victim.NextPain or 0) < CurTime() and health > 0) then return end
-
-	if victim:GTeam() == TEAM_GOC and victim:GetRoleName() != "GOC Spy" then
-		if victim:GetRoleName() == "GOC Soldier" then
-			victim:EmitSound("nextoren/vo/goc/grunt/pain_0" .. math.random(1, 9) .. ".wav")
-		elseif victim:GetRoleName() == "GOC Commander" then
-		    victim:EmitSound("nextoren/vo/goc/cmd/pain_0" .. math.random(1, 9) .. ".wav")
-	    elseif victim:GetRoleName() == "GOC Juggernaut" then
-		    victim:EmitSound("nextoren/vo/goc/jug/pain_0" .. math.random(1, 9) .. ".wav")
-	    else
-		    victim:EmitSound("nextoren/vo/goc/spec/pain_0" .. math.random(2, 8) .. ".wav")
-		end 
-		victim.NextPain = CurTime() + math.Rand(1.55, 4.22)
+	if victim:GTeam() == TEAM_SCP and !victim.Zombie then
 		return
 	end
 
-    if victim:GTeam() == TEAM_GUARD and !victim:IsFemale() then
-        victim:EmitSound("nextoren/vo/mtf/mtf_hit_" .. math.random(1, 23) .. ".wav", math.random(70, 126))
-    end
+	if victim:WouldDieFrom(damage) then
+		victim:Voice("die")
+		return
+	end
 
-    if victim:IsFemale() then
-        victim:EmitSound("nextoren/charactersounds/hurtsounds/sfemale/hurt_" .. math.random(1, 66) .. ".mp3", math.random(70, 126))
-    end
+    if !((victim.NextPain or 0) < CurTime() and health > 0) then return end
 
-    if !victim:IsFemale() and victim:GTeam() != TEAM_GUARD and victim:GTeam() != TEAM_GRU then
-        victim:EmitSound("nextoren/charactersounds/hurtsounds/male/hurt_" .. math.random(1, 39) .. ".wav", math.random(70, 126))
-    end
-
-    if victim:GTeam() == TEAM_GRU then
-        victim:EmitSound("nextoren/vo/gru/pain0" .. math.random(1, 10) .. ".wav")
-    end
+	victim:Voice("hit")
 
 	if attacker and attacker:IsPlayer() and attacker:GTeam() == TEAM_GRU and victim:Alive() and attacker:GetActiveWeapon().CW20Weapon and ((attacker.NextSpot or 0) < CurTime() and health > 0) then
 		attacker:EmitSound("nextoren/vo/gru/spot" .. math.random(1, 7) .. ".wav")
@@ -402,12 +281,9 @@ function GM:PlayerHurt(victim, attacker, health, damage)
     victim.NextPain = CurTime() + math.Rand(1.55, 4.22)
 end
 
-function PlayerCount()
-	return #player.GetAll()
-end
-
 function GM:OnEntityCreated( ent )
 	ent:SetShouldPlayPickupSound( false )
+
 	if ( ent:GetClass() == "prop_ragdoll" ) then
 		ent:InstallDataTable()
 		ent:NetworkVar( "Int", 0, "VictimHealth" )

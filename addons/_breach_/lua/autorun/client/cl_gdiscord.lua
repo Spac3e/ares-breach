@@ -1,30 +1,24 @@
-if not util.IsBinaryModuleInstalled("gdiscord") then return end
-
-
 local disabled = true
 
-if disabled then
+if disabled or not util.IsBinaryModuleInstalled("gdiscord") then
     return
 end
 
 require("gdiscord")
 
 local mapimage = {
-    ["ares_site19_supreme"] = "site19"
+    ["ares_site19"] = "site19"
 }
 
 local maptext = {
-    ["ares_site19_supreme"] = "ares_site19_supreme"
+    ["ares_site19"] = "ares_site19"
 }
 
-local image = "default"
 local discord_id = ""
 local refresh_time = 60
 local discord_start = discord_start or -1
 
 function DiscordUpdate()
-    local ply = LocalPlayer()
-
     local rpc_data = {}
     local ip = game.GetIPAddress()
 

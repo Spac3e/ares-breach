@@ -160,7 +160,7 @@ local dimension = {}
 
 for i = 1, 3 do dimension[#dimension + 1] = getpath("dimension/dimension_"..i..".ogg") end
 for i = 1, 3 do ambient[#ambient + 1] = getpath("spawn_ambient/start_ambience"..i..".ogg") end
-for i = 1, 6 do evacmusic[#evacmusic + 1] = "sound/no_music/evacuation/evacuation_"..i..".ogg" end
+for i = 1, 7 do evacmusic[#evacmusic + 1] = "sound/no_music/evacuation/evacuation_"..i..".ogg" end
 for i = 1, 10 do spawnambient[#spawnambient + 1] = "sound/no_music/start_round_ambient/start_ambience"..i..".ogg" end
 
 RegisterMusic(BR_MUSIC_SPAWN_DEFAULT, ambient, _, volume_spawn)

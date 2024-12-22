@@ -1,38 +1,5 @@
 include('shared.lua')
 
-surface.CreateFont( "LiveTabMainFont", {
-
-	font = "lztextinfo(RUS BY LYAJKA)",
-	size = 45,
-	weight = 700,
-	antialias = true,
-	shadow = false,
-	outline = false,
-
-} )
-
-surface.CreateFont( "LiveTabMainFont_small", {
-
-	font = "lztextinfo(RUS BY LYAJKA)",
-	size = 35,
-	weight = 700,
-	antialias = true,
-	shadow = false,
-	outline = false,
-
-} )
-
-surface.CreateFont( "LiveTabMainFont_verysmall", {
-
-	font = "lztextinfo(RUS BY LYAJKA)",
-	size = 15,
-	weight = 700,
-	antialias = true,
-	shadow = false,
-	outline = false,
-
-} )
-
 local PizzaDay = Material( "nextoren/ads/pizza" )
 local nukeicon = Material( "nextoren/nuke/nuke_redux" )
 local Emergencybroadcasticon = Material( "nextoren_hud/overlay/broadcast.png" )

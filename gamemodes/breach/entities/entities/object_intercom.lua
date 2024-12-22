@@ -374,25 +374,6 @@ if CLIENT then
 		  
 			CLOSE2225.FadeAlpha = 0
 	
-			surface.CreateFont("MainMenuFont", {
-	
-				font = "Conduit ITC",
-				size = 24,
-				weight = 800,
-				blursize = 0,
-				scanlines = 0,
-				antialias = true,
-				underline = false,
-				italic = false,
-				strikeout = false,
-				symbol = false,
-				rotary = false,
-				shadow = true,
-				additive = false,
-				outline = false
-			  
-			  })
-		  
 			CLOSE2225.Paint = function(self, w, h)
 		  
 			  draw.SimpleText( "Назад", "MainMenuFont", 75, h / 2, clr1, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )

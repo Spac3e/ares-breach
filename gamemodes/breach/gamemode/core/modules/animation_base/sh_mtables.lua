@@ -427,7 +427,7 @@ function GM:PlayerWeaponChanged(client, weapon, force)
     local holdType
     local IswepCW
     if wep_table then
-        IswepCW = weptable.Base == "cw_kk_ins2_base"
+        IswepCW = weptable.Base == "cw_kk_ins2_base_main"
         if IswepCW then
             holdType = weptable.NormalHoldType
         else
@@ -435,7 +435,7 @@ function GM:PlayerWeaponChanged(client, weapon, force)
         end
     else
         local stored_wep = weapons.GetStored(weapon:GetClass())
-        IswepCW = weptable.CW20Weapon or stored_wep and stored_wep.Base == "cw_kk_ins2_base"
+        IswepCW = weptable.CW20Weapon or stored_wep and stored_wep.Base == "cw_kk_ins2_base_main"
         holdType = BREACH.AnimationTable:GetWeaponHoldType(client, weapon, IswepCW)
     end
 
