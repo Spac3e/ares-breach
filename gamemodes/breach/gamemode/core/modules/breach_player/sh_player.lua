@@ -277,7 +277,7 @@ function GroundPos(pos)
 end
 
 net.Receive("hideinventory", function()
-    HideEQ(net.ReadBool()) ---- Инвентарь
+    HideEQ() ---- Инвентарь
 end)
 
 BREACH = BREACH or {}
@@ -456,13 +456,15 @@ local function DrawInspectWindow(wep, customname, id)
     BREACH.Inventory.SelectedID = id
 
     local dispname = customname
-    if !dispname and IsValid(wep) and wep.ClassName then
-        dispname = L(GetLangWeapon(wep.ClassName)) or "ERROR!"
+    if not dispname and wep.ClassName then
+        dispname = L(GetLangWeapon(wep.ClassName))
     end
 
+    dispname = dispname or "Unknown"
+        
     surface.SetFont("BudgetNewSmall2")
     local swidth, sheight = surface.GetTextSize(dispname)
-
+    
     BREACH.Inventory.InspectWindow = vgui.Create("DPanel")
     BREACH.Inventory.InspectWindow:SetSize(swidth + 8, sheight + 4)
     BREACH.Inventory.InspectWindow:SetText("")
@@ -883,7 +885,7 @@ local function DrawNewInventory(notvictim, vtab, ammo)
         local lockedcol = Color(100, 100, 100, 255)
         inv_butt.DoClick = function(self)
             if notvictim then
-                if IsEntity(EQHUD.weps[id]) and EQHUD.weps[id]:IsWeapon() then
+                if IsEntity(EQHUD.weps[id]) and EQHUD.weps[id]:IsWeapon() and IsValid(EQHUD.weps[id]) then
                     client:SelectWeapon(EQHUD.weps[id]:GetClass())
                 elseif istable(EQHUD.weps[id]) then
                     if EQHUD.weps[id].ArmorType == "Armor" then

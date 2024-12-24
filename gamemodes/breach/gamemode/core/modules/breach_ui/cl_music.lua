@@ -127,19 +127,15 @@ function BREACH.Music:Stop(fade)
             end
         end)
     else
-        if self.MusicPatch and self.MusicPatch:IsValid() then 
-            self.MusicPatch:Stop() 
+        if self.MusicPatch and self.MusicPatch:IsValid() then
+            self.MusicPatch:Stop()
         end
         self._loop = false
     end
 end
 
-function StopMusic()
-    BREACH.Music:Stop()
-end
-
-function FadeMusic(fadelen)
-    BREACH.Music:Stop(fadelen)
+function StopMusic(fadelen)
+    BREACH.Music:Stop(fadelen or 0)
 end
 
 local function StartMusic()
@@ -148,12 +144,7 @@ local function StartMusic()
 end
 
 net.Receive("ClientPlayMusic", StartMusic)
-
-local function StopeMusic()
-    BREACH.Music:Stop()
-end
-
-net.Receive("ClientStopMusic", StopeMusic)
+net.Receive("ClientStopMusic", StopMusic)
 
 concommand.Add("debug_music_test", function() BREACH.Music:Play(BR_MUSIC_FBI_AGENTS_ESCAPE) end)
 function BREACH.Music:ShouldMusicPlayAtTheMoment()
@@ -177,9 +168,9 @@ local action_banned = {
 }
 
 function BREACH.Music:ShouldPlayAction()
-    local team = LocalPlayer():GTeam()
-    if action_banned[team] then return false end
-    return true
+    local gteam = LocalPlayer():GTeam()
+
+    return not action_banned[gteam]
 end
 
 local generic_cd = 60
@@ -193,7 +184,9 @@ function BREACH.Music:PickGenericSong()
     if self.NoAutoMusic == true then return end
     local client = LocalPlayer()
     if not preparing then
-        if client:IsLZ() then
+        if client:GetInDimension() then
+            self:Play(BR_MUSIC_DIMENSION_SCP106)
+        elseif client:IsLZ() then
             self:Play(BR_MUSIC_AMBIENT_LZ)
         elseif client:IsEntrance() then
             self:Play(BR_MUSIC_AMBIENT_OFFICE)
@@ -223,10 +216,6 @@ function BREACH.Music:PickActionSong()
     else
         self:Play(BR_MUSIC_ACTION_LZ)
     end
-end
-
-function PlayMusic(str, fadelen, volume)
-    print(debug.traceback())
 end
 
 function BREACH.Music:Think()

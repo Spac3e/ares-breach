@@ -2,6 +2,8 @@ local PLAYER = FindMetaTable("Player")
 
 BreachAchievements = BreachAchievements or {}
 
+if not BREACH.DataBaseSystem then return end
+
 BreachAchievements.AchievementTable = {
     {
         name = "firsttime",
@@ -45,7 +47,7 @@ function BreachAchievements.InitDatabase()
         CREATE TABLE IF NOT EXISTS `achievements` (
         `id` bigint(20) NOT NULL,
         `achievements` text DEFAULT ''
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+        );
     ]])
 end
 

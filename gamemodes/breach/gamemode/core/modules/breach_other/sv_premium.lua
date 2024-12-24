@@ -1,22 +1,15 @@
-require('mysqloo')
-
 local PLAYER = FindMetaTable('Player')
 
 PREMIUM = PREMIUM or {}
 
+if not BREACH.DataBaseSystem then return end
+
 PREMIUM.Infinite = 1067519911673
 PREMIUM.Day = false
 
-local db = mysqloo.connect("localhost", "root", "", "breach", 3306)
-
-function db:onConnected()
-    PREMIUM.InitializePlayerDatabase()
-end
-
-db:connect()
 
 function PREMIUM.InitializePlayerDatabase()
-    local query = db:query('CREATE TABLE IF NOT EXISTS breach_premium (SteamID VARCHAR(255) NOT NULL PRIMARY KEY, Duration BIGINT);')
+    local query = BREACH.DataBaseSystem:Query('CREATE TABLE IF NOT EXISTS breach_premium (SteamID bigint(20) NOT NULL PRIMARY KEY, Duration BIGINT);')
 
     function query:onSuccess(data)
         PREMIUM.AddPlayer('steamId_example', PREMIUM.Infinite)
@@ -26,7 +19,7 @@ function PREMIUM.InitializePlayerDatabase()
 end
 
 function PREMIUM.DropTable()
-    local query = db:query('DROP TABLE IF EXISTS breach_premium;')
+    local query = BREACH.DataBaseSystem:Query('DROP TABLE IF EXISTS breach_premium;')
 
     function query:onSuccess(data)
         PREMIUM.InitializePlayerDatabase()
@@ -50,7 +43,7 @@ function PLAYER:DisablePremium()
 end
 
 function PREMIUM.Get(callback)
-    local query = db:query('SELECT * FROM breach_premium;')
+    local query = BREACH.DataBaseSystem:Query('SELECT * FROM breach_premium;')
 
     function query:onSuccess(data)
         callback(data)
@@ -64,7 +57,7 @@ function PREMIUM.Get(callback)
 end
 
 function PREMIUM.FindPlayer(SID, callback)
-    local query = db:query('SELECT SteamID FROM breach_premium WHERE SteamID = "' .. db:escape(SID) .. '";')
+    local query = BREACH.DataBaseSystem:Query('SELECT SteamID FROM breach_premium WHERE SteamID = "' .. BREACH.DataBaseSystem:Escape(SID) .. '";')
 
     function query:onSuccess(data)
         callback(#data > 0)
@@ -88,7 +81,7 @@ function PREMIUM.AddPlayer(SID, DUR)
     local origdur = DUR
     DUR = os.time() + (DUR * 86400)
 
-    local query = db:query('INSERT INTO breach_premium (SteamID, Duration) VALUES ("' .. db:escape(SID) .. '", ' .. DUR .. ') ON DUPLICATE KEY UPDATE Duration = VALUES(Duration);')
+    local query = BREACH.DataBaseSystem:Query('INSERT INTO breach_premium (SteamID, Duration) VALUES ("' .. BREACH.DataBaseSystem:Escape(SID) .. '", ' .. DUR .. ') ON DUPLICATE KEY UPDATE Duration = VALUES(Duration);')
 
     function query:onSuccess(data)
         local pl = player.GetBySteamID(SID)
@@ -102,7 +95,7 @@ function PREMIUM.AddPlayer(SID, DUR)
 end
 
 function PREMIUM.GetDuration(SID, callback)
-    local query = db:query('SELECT Duration FROM breach_premium WHERE SteamID = "' .. db:escape(SID) .. '";')
+    local query = BREACH.DataBaseSystem:Query('SELECT Duration FROM breach_premium WHERE SteamID = "' .. BREACH.DataBaseSystem:Escape(SID) .. '";')
 
     function query:onSuccess(data)
         if #data > 0 then
@@ -133,7 +126,7 @@ function PREMIUM.ExtendPlayer(SID, DUR)
         PREMIUM.GetDuration(SID, function(currentDur)
             local newDur = currentDur + (DUR * 86400)
 
-            local query = db:query('UPDATE breach_premium SET Duration = ' .. newDur .. ' WHERE SteamID = "' .. db:escape(SID) .. '";')
+            local query = BREACH.DataBaseSystem:Query('UPDATE breach_premium SET Duration = ' .. newDur .. ' WHERE SteamID = "' .. BREACH.DataBaseSystem:Escape(SID) .. '";')
 
             query:start()
         end)
@@ -144,7 +137,7 @@ function PREMIUM.Think()
     PREMIUM.Get(function(data)
         for k, v in pairs(data) do
             if os.time() >= tonumber(v.Duration) then
-                local query = db:query('DELETE FROM breach_premium WHERE SteamID = "' .. db:escape(v.SteamID) .. '";')
+                local query = BREACH.DataBaseSystem:Query('DELETE FROM breach_premium WHERE SteamID = "' .. BREACH.DataBaseSystem:Escape(v.SteamID) .. '";')
 
                 function query:onSuccess(data)
                     local pl = player.GetBySteamID(v.SteamID)
@@ -162,7 +155,7 @@ end
 
 function PREMIUM:OnJoin(ply)
     PREMIUM.FindPlayer(ply:SteamID(), function(isPremium)
-        if not isPremium and ply:GetUserGroup() == 'premium' then
+        if not isPremium and ply:GetUserGroup() == "premium" then
             ply:DisablePremium()
         elseif isPremium and not ply:IsPremium() then
             ply:SetPremium()

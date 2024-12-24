@@ -8,19 +8,13 @@ DeriveGamemode("base")
 DEFINE_BASECLASS("gamemode_base")
 
 GM.Base = baseclass.Get("base")
-GM.Version = "1.0"
-GM.Date = "19/02/2024"
 
 function GM:Initialize()
 	self.BaseClass.Initialize( self )
 end
 
-ALLLANGUAGES = {}
 BREACH = BREACH || {}
-role = {}
-
-russian = russian or {}
-nontranslated = {}
+BREACH.Version = "1.2 Experimental"
 
 TEAM_SCP = 1
 TEAM_GUARD = 2
@@ -42,11 +36,28 @@ TEAM_AMERICA = 18
 TEAM_ARENA = 19
 TEAM_SPEC = 20
 
--- Include core framework files.
-BREACH.IncludeDir("core/libs/")
-if (SERVER) then AddCSLuaFile( "core/modules/breach_module/cl_module.lua" ) AddCSLuaFile( "core/modules/breach_module/sh_module.lua" ) include( "core/modules/breach_module/sv_module.lua" ) include( "core/modules/breach_module/sh_module.lua") else include( "core/modules/breach_module/cl_module.lua" ) include( "core/modules/breach_module/sh_module.lua" ) end
-AddCSLuaFile( "core/modules/breach_ui/music.lua" )
-include("core/modules/breach_ui/music.lua")
+role = {}
+ALLLANGUAGES = {}
+
+russian = russian or {}
+nontranslated = {}
+
+BREACH.IncludeDir("core/libraries/thirdparty")
+BREACH.IncludeDir("core/libraries")
+BREACH.Include("core/sh_core.lua")
+
+if SERVER then
+    AddCSLuaFile("core/modules/breach_ui/music.lua")
+    AddCSLuaFile("core/modules/breach_module/cl_module.lua")
+    AddCSLuaFile("core/modules/breach_module/sh_module.lua")
+    include("core/modules/breach_module/sv_module.lua")
+    include("core/modules/breach_module/sh_module.lua")
+else
+    include("core/modules/breach_module/cl_module.lua")
+    include("core/modules/breach_module/sh_module.lua")
+    include("core/modules/breach_ui/music.lua")
+end
+
+BREACH.IncludeDir("configs")
 BREACH.IncludeDir("configs/languages")
-BREACH.IncludeDir("configs/")
-BREACH.IncludeDir("core/", true)
+BREACH.IncludeDir("core/modules", true)

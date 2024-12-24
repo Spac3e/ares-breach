@@ -25,15 +25,19 @@ local render = render
 local util = util
 local math = math
 
-BREACH.observer.dimDistance = 1024
-BREACH.observer.fullbright = true
-BREACH.observer.enabled = true
-BREACH.observer.player = true
-BREACH.observer.blur = true
-BREACH.observer.steam = true
-BREACH.observer.font = "UiBold"
+BREACH.Observer = BREACH.Observer or {}
+BREACH.Observer.types = BREACH.Observer.types or {}
+BREACH.Observer.renderall = true
 
-net.Receive("BREACHObserverFlashlight", function(len, ply)
+BREACH.Observer.dimDistance = 1024
+BREACH.Observer.fullbright = true
+BREACH.Observer.enabled = true
+BREACH.Observer.player = true
+BREACH.Observer.blur = true
+BREACH.Observer.steam = true
+BREACH.Observer.font = "UiBold"
+
+net.Receive("BREACH.Observer.Flashlight", function(len, ply)
 	LocalPlayer():EmitSound("buttons/lightswitch2.wav")
 end)
 
@@ -49,24 +53,38 @@ hook.Add("PrePlayerDraw", "BREACH.Observer-DrawPhysgunBeam", function(client)
 	end
 end)
 
-/*
+function BREACH.Observer:RegisterESPType(type, func, optionName, optionNiceName, optionDesc, bDrawClamped)  
+    BREACH.Observer.types[string.lower(type)] = {string.lower(optionName) .. "ESP", func, bDrawClamped}
+end
+
+function BREACH.Observer:ShouldRenderAnyTypes()
+    for _, v in pairs(BREACH.Observer.types) do
+        if (BREACH.Observer.renderall) then
+            return true
+        end
+    end
+
+    return false
+end
+
 hook.Add("Think", "BREACH.Observer-Think", function()
     if (!LocalPlayer():GetNWBool("observerLight")) then return end
 
 	local dlight = DynamicLight(LocalPlayer():EntIndex())
-	if (dlight) then
-		local trace = LocalPlayer():GetEyeTraceNoCursor()
-		dlight.pos = LocalPlayer():GetShootPos() + LocalPlayer():EyeAngles():Forward() * -100
-		dlight.r = 255
-		dlight.g = 255
-		dlight.b = 255
-		dlight.brightness = math.Remap(math.Clamp(trace.HitPos:DistToSqr(LocalPlayer():EyePos()), 100, 10000), 100, 10000, 0.01, 1)
-		dlight.Decay = 20000
-		dlight.Size = 2000
-		dlight.DieTime = CurTime() + 0.1
-	end
+    if dlight then
+        local trace = LocalPlayer():GetEyeTraceNoCursor()
+        dlight.pos = LocalPlayer():GetShootPos() + LocalPlayer():EyeAngles():Forward() * -100
+        dlight.r = 220
+        dlight.g = 220
+        dlight.b = 200
+
+        local distance = trace.HitPos:DistToSqr(LocalPlayer():EyePos())
+        dlight.brightness = math.Remap(math.Clamp(distance, 500, 5000), 500, 5000, 0.2, 1)
+        dlight.Decay = 15000
+        dlight.Size = 1500
+        dlight.DieTime = CurTime() + 0.1
+    end
 end)
-*/
 
 hook.Add("DrawPointESP", "BREACH.Observer-DrawPointESP", function()
 
@@ -82,7 +100,7 @@ hook.Add("HUDPaint", "BREACH.Observer-HUDPaint", function()
     end
     
 	if (drawESP == nil) then
-		drawESP = BREACH.observer.enabled and client:GetMoveType() == MOVETYPE_NOCLIP and
+		drawESP = BREACH.Observer.enabled and client:GetMoveType() == MOVETYPE_NOCLIP and
 		!client:InVehicle() and client:IsAdmin()
 	end
 
@@ -90,23 +108,23 @@ hook.Add("HUDPaint", "BREACH.Observer-HUDPaint", function()
 		local scrW, scrH = ScrW(), ScrH()
 		local marginX, marginY = scrH * .1, scrH * .1
 
-        hook.Run("DrawPlayerESP", client, scrW, scrH, BREACH.observer.player)
+        hook.Run("DrawPlayerESP", client, scrW, scrH, BREACH.Observer.player)
 
-		if (BREACH.observer:ShouldRenderAnyTypes()) then
+		if (BREACH.Observer:ShouldRenderAnyTypes()) then
 			for _, ent in pairs(ents.GetAll()) do
 				if (!IsValid(ent)) then continue end
 
 				local class = string.lower(ent:GetClass())
-				if (BREACH.observer.types[class] and BREACH.observer.types[class][1]) then
+				if (BREACH.Observer.types[class] and BREACH.Observer.types[class][1]) then
 					local screenPosition = ent:GetPos():ToScreen()
 					local x, y = math.Clamp(screenPosition.x, marginX, scrW - marginX), math.Clamp(screenPosition.y, marginY, scrH - marginY)
-					if ((x != screenPosition.x or screenPosition.y != y) and !BREACH.observer.types[class][3]) then
+					if ((x != screenPosition.x or screenPosition.y != y) and !BREACH.Observer.types[class][3]) then
 						continue
 					end
 
 					local distance = client:GetPos():Distance(ent:GetPos())
-					local factor = 1 - math.Clamp(distance / BREACH.observer.dimDistance, 0, 1)
-					BREACH.observer.types[class][2](client, ent, x, y, factor, distance)
+					local factor = 1 - math.Clamp(distance / BREACH.Observer.dimDistance, 0, 1)
+					BREACH.Observer.types[class][2](client, ent, x, y, factor, distance)
 				end
 			end
 		end
@@ -125,9 +143,9 @@ hook.Add("HUDPaint", "BREACH.Observer-HUDPaint", function()
 			local drawColor = v[3] or color_white
 
 			surface.SetDrawColor(drawColor.r, drawColor.g, drawColor.b, alpha)
-			surface.SetFont(BREACH.observer.font)
+			surface.SetFont(BREACH.Observer.font)
 			surface.DrawRect(x - size / 2, y - size / 2, size, size)
-			draw.SimpleText(v[2], BREACH.observer.font, x, y - (size + 5), ColorAlpha(drawColor, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha)
+			draw.SimpleText(v[2], BREACH.Observer.font, x, y - (size + 5), ColorAlpha(drawColor, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha)
 		end
 	end
 end)
@@ -151,21 +169,7 @@ hook.Add("GetPlayerESPText", "BREACH.Observer-GetPlayerESPText", function(client
 	end
 end)
 
-/*
-hook.Add("PreRender", "BREACH.Observer-PreRender", function()
-    if (LocalPlayer():GetNWBool("observerLight") and BREACH.observer.fullbright) then
-		render.SetLightingMode(1)
-	end
-end)
-
-hook.Add("PreDrawHUD", "BREACH.Observer-PreDrawHUD", function()
-    if (LocalPlayer():GetNWBool("observerLight") and BREACH.observer.fullbright) then
-		render.SetLightingMode(0)
-	end
-end)
-*/
-
-BREACH.observer.traceFilter = {nil, nil}
+BREACH.Observer.traceFilter = {nil, nil}
 
 local color_white = Color(255, 255, 255)
 local extraColor = Color(200, 200, 200, 255)
@@ -188,10 +192,10 @@ do
 
         local alpha = math.Remap(math.Clamp(distance, 500, 2500), 500, 2500, 255, 45)
         if (IsValid(entity) and entity:GetNWBool("Persistent", false)) then
-            draw.SimpleText(entity:GetModel(), BREACH.observer.font, x, y - math.max(10, 32 * factor), espcol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha)
+            draw.SimpleText(entity:GetModel(), BREACH.Observer.font, x, y - math.max(10, 32 * factor), espcol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha)
         end
     end
-    BREACH.observer:RegisterESPType("prop_physics", staticESP, "static", "Show Static Prop ESP")
+    BREACH.Observer:RegisterESPType("prop_physics", staticESP, "static", "Show Static Prop ESP")
 end
 
 local function sortFunc(a, b)
@@ -207,7 +211,7 @@ end
 hook.Add("DrawPlayerESP", "BREACH.Observer-DrawPlayerESP", function(client, scrW, scrH, drawMdl)
     local pos = client:EyePos()
     local marginX, marginY = scrW * .1, scrH * .1
-    BREACH.observer.traceFilter[1] = client
+    BREACH.Observer.traceFilter[1] = client
 
     local names = {}
     cam.Start3D()
@@ -265,11 +269,11 @@ hook.Add("DrawPlayerESP", "BREACH.Observer-DrawPlayerESP", function(client, scrW
             surface.DrawRect(barX, barY + 10, barWidth * math.Clamp(ply:Armor() / 50, 0, 1), 3)
         end
 
-        surface.SetFont(BREACH.observer.font)
-        draw.SimpleText(ply:Name(), BREACH.observer.font, barX, barY - 13, teamColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, nil, 255)
+        surface.SetFont(BREACH.Observer.font)
+        draw.SimpleText(ply:Name(), BREACH.Observer.font, barX, barY - 13, teamColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, nil, 255)
 
-        if (BREACH.observer.steam) then
-            surface.SetFont(BREACH.observer.font)
+        if (BREACH.Observer.steam) then
+            surface.SetFont(BREACH.Observer.font)
             local y = barY + extraHeight + 13
             local toDraw = {}
             hook.Run("GetPlayerESPText", ply, toDraw, distance, alphaFar, alphaMid, alphaClose)
@@ -279,7 +283,7 @@ hook.Add("DrawPlayerESP", "BREACH.Observer-DrawPlayerESP", function(client, scrW
                 if (v.alpha <= 0) then continue end
 
                 extraColor.a = v.alpha
-                draw.SimpleText(v.text, BREACH.observer.font, barX, y, v.color or extraColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, nil, v.alpha)
+                draw.SimpleText(v.text, BREACH.Observer.font, barX, y, v.color or extraColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, nil, v.alpha)
 
                 local _, txtHeight = surface.GetTextSize(v.text)
                 y = y + txtHeight
@@ -292,9 +296,9 @@ hook.Add("RenderAdminESP", "BREACH.Observer-RenderAdminESP", function(client, ta
     render.SuppressEngineLighting(true)
     render.SetColorModulation(color.r / 255, color.g / 255, color.b / 255)
 
-    BREACH.observer.traceFilter[2] = target
+    BREACH.Observer.traceFilter[2] = target
 
-    if (BREACH.observer.blur or util.QuickTrace(clientPos, targetEyePos - clientPos, BREACH.observer.traceFilter).Fraction < 0.95) then
+    if (BREACH.Observer.blur or util.QuickTrace(clientPos, targetEyePos - clientPos, BREACH.Observer.traceFilter).Fraction < 0.95) then
         render.SetBlend(1)
     else
         render.SetBlend(math.Remap(math.Clamp(distance, 200, 4000), 200, 8000, 0.05, 1))

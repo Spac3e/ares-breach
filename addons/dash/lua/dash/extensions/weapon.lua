@@ -4,9 +4,16 @@ local GetOwner = ENTITY.GetOwner
 
 local ownerkey = 'Owner'
 function WEAPON:__index(key)
-	local value = WEAPON[key] or ENTITY[key] or GetTable(self)[key]
+    local val = WEAPON[key]
+    if val ~= nil then return val end
+    local val = ENTITY[key]
+    if val ~= nil then return val end
+    local tab = GetTable(self)
 
-	if value ~= nil then return value end
+    if tab ~= nil then
+        local val = tab[key]
+        if val ~= nil then return val end
+    end
 
-	if (key == ownerkey) then return GetOwner(self) end
+    if key == ownerkey then return GetOwner(self) end
 end

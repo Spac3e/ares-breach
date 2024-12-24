@@ -19,121 +19,6 @@ local net = net
 local player = player
 BREACH.Round = BREACH.Round || {}
 
-function AdminActionLog(admin, user, title, desc)
-	local niceusergroup = {
-		["superadmin"] = "Creator",
-		["admin"] = "Administrator",
-		["headadmin"] = "Head Administrator",
-		["spectator"] = "Warden",
-	}
-
-	if IsValid(admin) and admin:IsSuperAdmin() then return end
-
-	local nicecolor = {
-		["superadmin"] = 57599,
-		["admin"] = 16711680,
-		["headadmin"] = 16732672,
-		["spectator"] = 16732672,
-	}
-
-	local color = 0
-	local name = ""
-	local adminurl = "https://steamcommunity.com/profiles/76561198797549224"
-
-	local usersteamid64 = ""
-
-	if IsValid(user) then
-		usersteamid64 = user:SteamID64()
-	else
-		usersteamid64 = user
-	end
-
-	local victimprofile = "https://steamcommunity.com/profiles/"
-
-	if IsValid(user) then
-		victimprofile = victimprofile..user:SteamID64()
-	else
-		victimprofile = victimprofile..user
-	end
-
-	if !IsValid(admin) then
-
-		name = "SERVER"
-
-	else
-
-		name = admin:Name().." ("..niceusergroup[admin:GetUserGroup()]..")"
-		color = nicecolor[admin:GetUserGroup()]
-		adminurl = "https://steamcommunity.com/profiles/"..admin:SteamID64()
-
-	end
-
-	local t_struct = {
-		        failed = function( err ) MsgC( Color(255,0,0), "HTTP error: " .. err ) end,
-		        url = ADMIN19URL,
-		        method = "POST",
-			    type = "application/json",
-			    header = {
-			         ["User-Agent"] = "DiscordBot (https://no.url, 43)"
-			    },
-			    body = [[{ 
-			    "webhook":"]]..AdminLogWebHook..[[",
-			    "content":"----------------------------------------------------------------------------------"
-				}]]}
-	HTTP(t_struct)
-
-    if !IsValid(admin) then
-    		local t_struct = {
-		        failed = function( err ) MsgC( Color(255,0,0), "HTTP error: " .. err ) end,
-		        url = ADMIN19URL,
-		        method = "POST",
-			    type = "application/json",
-			    header = {
-			         ["User-Agent"] = "DiscordBot (https://no.url, 43)"
-			    },
-			    body = [[{ 
-			    "username":"]]..name_eng[math.random(1, #name_eng)].." "..surname[math.random(1,#surname)]..[[",
-			    "webhook":"]]..AdminLogWebHook..[[",
-				"embeds":[{
-				"title":"]]..title..[[",
-				"description":"]]..desc..[[",
-				"url":"]]..victimprofile..[[",
-				"color":]]..color..[[,
-				"author":{
-					"name":"]]..name..[["
-				}
-				}]
-				}]]}
-		HTTP(t_struct)
-    else
-    	http.Fetch("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key="..SteamAPIKey.."&steamids="..admin:SteamID64(), function(body)
-    		body = util.JSONToTable(body).response.players[1]
-    		local t_struct = {
-		        failed = function( err ) MsgC( Color(255,0,0), "HTTP error: " .. err ) end,
-		        url = ADMIN19URL,
-		        method = "POST",
-			    type = "application/json",
-			    header = {
-			         ["User-Agent"] = "DiscordBot (https://no.url, 43)"
-			    },
-			    body = [[{ 
-			    "username":"]]..name..[[",
-			    "avatar_url":"]]..body.avatarfull..[[",
-			    "webhook":"]]..AdminLogWebHook..[[",
-				"embeds":[{
-				"title":"]]..title..[[",
-				"description":"]]..desc..[[",
-				"url":"]]..victimprofile..[[",
-				"color":]]..color..[[
-				}]
-				}]]}
-		    HTTP(t_struct)
-
-		end)
-    end
-
-end
-
 local function GetPlayerName(steamid)
 	return ULib.bans[ steamid ] and ULib.bans[ steamid ].name
 end
@@ -247,17 +132,11 @@ function ulx.forcespawn( ply, plys, class )
             end
         end
         if cl and gr then
-            --local pos = SPAWN_OUTSIDE
             for k, v in pairs( plys ) do
                 if v:GetActive() then
-                    local pos = v:GetPos()
                     v:SetupNormal()
                     v:ApplyRoleStats( cl, true )
-                    v:SetPos(ply:GetPos())
                     v:StripWeapon("item_knife")
-                    --if pos then
-                        --v:SetPos( table.Random( pos ) )
-                    --end
                 else
                     ULib.tsayError( plyc, "Player "..v:GetName().." is inactive! Forced spawn failed", true )
                 end
@@ -287,16 +166,12 @@ function ulx.forcespawn( ply, plys, class )
             end
         end
         if cl then
-            --local pos = SPAWN_OUTSIDE
             for k, v in pairs( plys ) do
                 if v:GetActive() then
                     local pos = v:GetPos()
                     v:SetupNormal()
                     v:ApplyRoleStats( cl, true )
                     v:SetPos(pos)
-                    --if pos then
-                        --v:SetPos( table.Random( pos ) )
-                    --end
                 else
                     ULib.tsayError( plyc, "Player "..v:GetName().." is inactive! Forced spawn failed", true )
                 end
@@ -468,18 +343,6 @@ getmuteinfo:addParam{ type = ULib.cmds.StringArg, hint="SteamID64" }
 getmuteinfo:defaultAccess( ULib.ACCESS_ADMIN )
 getmuteinfo:help( "" )
 
-function ulx.globalban( ply, tply )
-	GlobalBan(tply)
-	ply:AresNotify(tply:Name(), " l:ulx_global_banned")
-
-	AdminActionLog(ply, tply, "Global Banned "..tply:Name(), "")
-end
-
-local globalban = ulx.command( "Admin", "ulx globalban", ulx.globalban, "!globalban" )
-globalban:addParam{ type = ULib.cmds.PlayerArg }
-globalban:defaultAccess( ULib.ACCESS_ADMIN )
-globalban:help( "" )
-
 function ulx.lastseenuser( ply, tply )
 	GetConnectedUsersList(ply, tply)
 end
@@ -488,77 +351,6 @@ local lastseenuser = ulx.command( "Admin", "ulx lastseenuser", ulx.lastseenuser,
 lastseenuser:addParam{ type = ULib.cmds.PlayerArg }
 lastseenuser:defaultAccess( ULib.ACCESS_ADMIN )
 lastseenuser:help( "" )
-
-function ulx.unglobalban( ply, steamid64 )
-	UnGlobalBan(steamid64)
-	ply:AresNotify("l:ulx_global_unbanned "..steamid64)
-
-	AdminActionLog(ply, steamid64, "Removed Global Ban from  "..steamid64, "")
-end
-
-local unglobalban = ulx.command( "Admin", "ulx unglobalban", ulx.unglobalban, "!unglobalban" )
-unglobalban:addParam{ type = ULib.cmds.StringArg, hint = "SteamID64" }
-unglobalban:defaultAccess( ULib.ACCESS_ADMIN )
-unglobalban:help( "" )
-
-
---[[penalty]]--
-function ulx.setpenalty( admin, ply, amount )
-
-	SetPenalty(ply:SteamID64(), amount, true)
-	admin:AresNotify("Игроку ", Color(255,0,0), "\""..ply:Name().."\"", color_white, " был успешно выдан статус штрафника!")
-	admin:AresNotify("Количество требуемых побегов: ",Color(255,0,0), ply:GetPenaltyAmount())
-
-end
-
-local setpenalty = ulx.command( "Admin", "ulx setpenalty", ulx.setpenalty, "!setpenalty" )
-setpenalty:addParam{ type = ULib.cmds.PlayerArg }
-setpenalty:addParam{ type = ULib.cmds.NumArg, min=0 }
-setpenalty:defaultAccess( ULib.ACCESS_ADMIN )
-setpenalty:help( "" )
-
-function ulx.removepenalty( admin, ply )
-
-	SetPenalty(ply:SteamID64(), 0, true)
-	admin:AresNotify("Игроку ", Color(255,0,0), "\""..ply:Name().."\"", color_white, " был успешно снят статус штрафника!")
-
-end
-
-local removepenalty = ulx.command( "Admin", "ulx removepenalty", ulx.removepenalty, "!removepenalty" )
-removepenalty:addParam{ type = ULib.cmds.PlayerArg }
-removepenalty:defaultAccess( ULib.ACCESS_ADMIN )
-removepenalty:help( "" )
-
-function ulx.getpenalty( admin, ply )
-
-	admin:AresNotify("Количество требуемых побегов: ",Color(255,0,0), ply:GetPenaltyAmount())
-
-end
-
-local getpenalty = ulx.command( "Admin", "ulx getpenalty", ulx.getpenalty, "!getpenalty" )
-getpenalty:addParam{ type = ULib.cmds.PlayerArg }
-getpenalty:defaultAccess( ULib.ACCESS_ADMIN )
-getpenalty:help( "" )
-
-function ulx.checkpenalty( me )
-
-	local amount = me:GetPenaltyAmount()
-
-	if amount > 0 then
-
-		me:AresNotify("Количество требуемых побегов: ",Color(255,0,0), amount)
-
-	else
-
-		me:AresNotify("Вы не имеете статус штрафника.")
-
-	end
-
-end
-
-local checkpenalty = ulx.command( "Breach", "ulx checkpenalty", ulx.checkpenalty, "!checkpenalty" )
-checkpenalty:defaultAccess( ULib.ACCESS_ALL )
-checkpenalty:help( "" )
 
 local function SendSpecMessage(ignore, ...)
 	local plys = player.GetAll()
@@ -617,17 +409,6 @@ function ulx.mute( call_ply, ply, time, reason )
 
 	SendSpecMessage(ply, "l:ulx_player ", Color(255,0,0), "\""..ply:Name().."\"",Color(255,255,255), unpack(mutetext))
 	ply:AresNotify(Color(255,0,0), ply:Name().."l:ulx_you", Color(255,255,255), unpack(mutetext))
-
-	local logtext = "Muted "..ply:Name().." Permanently"
-	if time != 0 then
-		logtext = "Muted "..ply:Name().." for "..timestring
-	end
-	local logreason = ""
-	if reason != nil and reason != "" then
-		logreason = reason
-	end
-	AdminActionLog(call_ply, ply, logtext, logreason)
-
 end
 
 local mute = ulx.command( "Admin", "ulx mute", ulx.mute, "!mute" )
@@ -671,17 +452,6 @@ function ulx.gag( call_ply, ply, time, reason )
 
 	SendSpecMessage(ply, "l:ulx_player ", Color(255,0,0), "\""..ply:Name().."\"",Color(255,255,255), unpack(mutetext))
 	ply:AresNotify(Color(255,0,0), ply:Name().."l:ulx_you", Color(255,255,255), unpack(mutetext))
-
-	local logtext = "Gagged "..ply:Name().." Permanently"
-	if time != 0 then
-		logtext = "Gagged "..ply:Name().." for "..timestring
-	end
-	local logreason = ""
-	if reason != nil and reason != "" then
-		logreason = reason
-	end
-	AdminActionLog(call_ply, ply, logtext, logreason)
-
 end
 
 local gag = ulx.command( "Admin", "ulx gag", ulx.gag, "!gag" )
@@ -801,25 +571,6 @@ function ulx.muteid(call_ply, steamid64, time, reason)
 
 	util.SetPData(steamid, "AresMuteAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
 	util.SetPData(steamid, "AresMuteReason", reason)
-
-	local timestring = string.NiceTime(time)
-
-	if remembername then
-		remembername = steamid64.." ("..remembername..")"
-	else
-		remembername = steamid64
-	end
-
-	local logtext = "Muted "..remembername.." Permanently"
-	if time != 0 then
-		logtext = "Muted "..remembername.." for "..timestring
-	end
-	local logreason = ""
-	if reason != nil and reason != "" then
-		logreason = reason
-	end
-	AdminActionLog(call_ply, steamid64, logtext, logreason)
-
 end
 
 local muteid = ulx.command( "Admin", "ulx muteid", ulx.muteid, "!muteid" )
@@ -914,25 +665,6 @@ function ulx.gagid(call_ply, steamid64, time, reason)
 
 	util.SetPData(steamid, "AresGaggedAdmin", IsValid(call_ply) and call_ply:Name() or "SERVER")
 	util.SetPData(steamid, "AresGaggedReason", reason)
-
-	local timestring = string.NiceTime(time)
-
-	if remembername then
-		remembername = steamid64.." ("..remembername..")"
-	else
-		remembername = steamid64
-	end
-
-	local logtext = "Gagged "..remembername.." Permanently"
-	if time != 0 then
-		logtext = "Gagged "..remembername.." for "..timestring
-	end
-	local logreason = ""
-	if reason != nil and reason != "" then
-		logreason = reason
-	end
-	AdminActionLog(call_ply, steamid64, logtext, logreason)
-
 end
 
 local gagid = ulx.command( "Admin", "ulx gagid", ulx.gagid, "!gagid" )
@@ -956,11 +688,6 @@ function ulx.unmute(call_ply, ply)
 	ply:RemovePData("AresMute")
 	ply:RemovePData("AresMuteTime")
 	ply:SetNWBool("ulx_muted", false)
-
-	local logtext = "Unmuted "..ply:Name()
-	local logreason = ""
-	AdminActionLog(call_ply, ply, logtext, logreason)
-
 end
 
 local unmute = ulx.command( "Admin", "ulx unmute", ulx.unmute, "!unmute" )
@@ -975,18 +702,13 @@ function ulx.ungag(call_ply, ply)
 	if IsValid(call_ply) then
 		adminname = call_ply:Name()
 	end
-	
+
 	ply:AresNotify("l:ulx_admin \""..adminname.."\" l:ulx_they_removed_gag_from_you")
 	if IsValid(call_ply) then call_ply:AresNotify("l:ulx_player \""..ply:Name().."\" l:ulx_has_been_sucessfully_ungagged") end
 
 	ply:RemovePData("AresGagged")
 	ply:RemovePData("AresGaggedTime")
 	ply:SetNWBool("ulx_gagged", false)
-
-	local logtext = "Ungagged "..ply:Name()
-	local logreason = ""
-	AdminActionLog(call_ply, ply, logtext, logreason)
-
 end
 
 local ungag = ulx.command( "Admin", "ulx ungag", ulx.ungag, "!ungag" )
@@ -1016,13 +738,6 @@ function ulx.unmuteid(call_ply, steamid64)
 			call_ply:AresNotify("l:ulx_player "..steamid64.." l:ulx_has_been_sucessfully_unmuted")
 		end
 	end
-
-	local logtext = "Unmuted "..steamid64
-	if remembername then
-		logtext = "Unmuted "..steamid64.." ("..remembername..")"
-	end
-	AdminActionLog(call_ply, steamid64, logtext, "")
-
 end
 
 local unmuteid = ulx.command( "Admin", "ulx unmuteid", ulx.unmuteid, "!unmuteid" )
@@ -1044,13 +759,6 @@ function ulx.ungagid(call_ply, steamid64)
 
 	util.RemovePData(steamid, "AresGagged")
 	util.RemovePData(steamid, "AresGaggedTime")
-
-	local logtext = "Ungagged "..steamid64
-	if remembername then
-		logtext = "Ungagged "..steamid64.." ("..remembername..")"
-	end
-	AdminActionLog(call_ply, steamid64, logtext, "")
-
 end
 
 local ungagid = ulx.command( "Admin", "ulx ungagid", ulx.ungagid, "!ungagid" )

@@ -145,6 +145,10 @@ local function WaitingForPlayers()
             local y_center = screenheight / 2
             draw.SimpleText(time_left, "LZTextBig", x_center, y_center, Color(255, 0, 0, pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         else
+			if gteam != TEAM_SPEC then
+				padding = BREACH.ScreenScale(ScrW()) + 87
+			end
+	
             draw.SimpleText(countdown_text, "ScoreboardContent", padding, y_waiting, ColorAlpha(color_white, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 			alpha_ready = math.abs(math.sin(CurTime() * 2)) * 50 + 205
 			draw.SimpleText("Ready to play", "ScoreboardContent", padding, y_needed, ColorAlpha(color_white, alpha_ready), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)	
@@ -520,7 +524,7 @@ local function UIU_Ending( complete )
 				if ( !self.CallFade ) then
 
 					self.CallFade = true
-					FadeMusic( 10 )
+					StopMusic( 10 )
 
 				end
 
@@ -613,7 +617,7 @@ function GOCStart()
 
 		if ( self.StartAlpha <= 0 ) then
 
-			FadeMusic( 15 )
+			StopMusic( 15 )
 			--Show_Spy( client:Team() )
 			self:Remove()			
 
@@ -764,7 +768,7 @@ function SHStart()
 
 			timer.Simple( 40, function()
 
-				FadeMusic( 15 )
+				StopMusic( 15 )
 
 
 			end )
@@ -1018,7 +1022,7 @@ function CutScene()
 
 		if ( self.StartAlpha <= 0 ) then
 
-			FadeMusic( 16 )
+			StopMusic( 16 )
 
 			timer.Simple( 12, function()
 
@@ -1173,7 +1177,7 @@ function GRUSpawn()
 
 		if ( self.StartAlpha <= 0 ) then
 
-			FadeMusic( 10 )
+			StopMusic( 10 )
 
 			timer.Simple( 12, function()
 
@@ -1248,7 +1252,7 @@ local function Ending( status )
 
 				if ( self.StartAlpha <= 0 ) then
 
-					FadeMusic( 10 )
+					StopMusic( 10 )
 					self:Remove()
 
 				end
@@ -2353,59 +2357,81 @@ function Pulsate(c) --Использование флешей
 end
 
 local bg_106_lerp = 0
-local appeartextlerp = 0
-
 local scp_106_texts = {
-	"DEATH",
-	"FEAR",
-	"PAIN",
-	"DESPAIR",
-	"HOPELESS",
-	"AGONY",
-	"IMPOSSIBLE",
+    "DEATH",
+    "FEAR",
+    "PAIN",
+    "DESPAIR",
+    "HOPELESS",
+    "AGONY",
+    "IMPOSSIBLE",
+	"NO ESCAPE",
+	"ALONE",
+	"NO HOPE",
+	"ENDLESS",
+	"SUFFER",
+	"LOST",
+	"TOO LATE",
+	"AVOID"
 }
 
 local function CreateSCP106Text()
+    local msg = scp_106_texts[math.random(1, #scp_106_texts)]
+    local text = vgui.Create("DLabel")
 
-	local msg = scp_106_texts[math.random(1, #scp_106_texts)]
+    text:SetText(msg)
+    text:SetFont("SCP106_TEXT")
+    text:SetTextColor(Color(155, 0, 0))
+    text:SizeToContents()
+    text:SetWide(text:GetWide() + 20)
+    text:SetPos(math.random(0, ScrW() - text:GetWide()), ScrH() - math.random(100, 600))
 
-	local text = vgui.Create("DLabel")
-	text:SetText(msg)
-	text:SetFont("SCP106_TEXT")
-	text:SetTextColor(Color(155,0,0))
-	text:SizeToContents()
-	text:SetWide(text:GetWide()+20)
-	text:SetPos(math.random(0, ScrW() - text:GetWide()), ScrH()-math.random(100,600))
-	timer.Simple(4, function() if IsValid(text) then text:AlphaTo(0, 1, 0, function() if IsValid(text) then text:Remove() end end) end end)
-	text:SetAlpha(0)
-	text:AlphaTo(35,1)
-	local original_x = text:GetX()
-	local original_y = text:GetY()
-	text.Think = function(self)
+    text:SetAlpha(0)
 
-		if !LocalPlayer():GetInDimension() then self:Remove() end
+	timer.Simple(2.5, function()
+        if IsValid(text) then
+            text:AlphaTo(35, 1, 0)
 
-		self:SetX(original_x + math.random(-8,8))
-		self:SetY(original_y + math.random(-8,8))
+            timer.Simple(4, function()
+                if IsValid(text) then
+                    text:AlphaTo(0, 1, 0, function()
+                        if IsValid(text) then text:Remove() end
+                    end)
+                end
+            end)
+        end
+    end)
 
-	end
+    local original_x, original_y = text:GetX(), text:GetY()
+    local move_time = RealTime()
 
+    text.Think = function(self)
+        if not IsValid(LocalPlayer()) or not LocalPlayer():GetInDimension() then
+            self:Remove()
+            return
+        end
+
+        local offset = math.sin((RealTime() - move_time) * 5) * 5
+        local shake_x = math.random(-2, 2)
+        local shake_y = math.random(-2, 2)
+        self:SetPos(original_x + offset + shake_x, original_y + offset + shake_y)
+    end
 end
 
-hook.Add( "HUDPaint", "SCP_106_creepy_visuals", function()
+hook.Add("HUDPaint", "SCP_106_creepy_visuals", function()
+    local ply = LocalPlayer()
 
-	if LocalPlayer():GetInDimension() and LocalPlayer():GTeam() != TEAM_SCP then
+    if ply:GetInDimension() and ply:GTeam() ~= TEAM_SCP then
+        local scrw, scrh = ScrW(), ScrH()
+        bg_106_lerp = math.abs(math.sin(RealTime() * math.Rand(0.3, 0.4))) * 100
+        local bg_color = Color(0, 0, 0, bg_106_lerp)
 
-		local scrw, scrh = ScrW(), ScrH()
+        draw.RoundedBox(0, 0, 0, scrw, scrh, bg_color)
 
-		bg_106_lerp = (math.abs(math.sin(CurTime()*math.Rand(0.3,0.4))))*100
-
-		local bg_color = Color(0,0,0,bg_106_lerp)
-
-		draw.RoundedBox(0, 0, 0, scrw, scrh, bg_color)
-
-	end
-
+        if math.random(1, 100) > 98 then
+            CreateSCP106Text()
+        end
+    end
 end)
 
 local XpAddInc = false
@@ -3227,7 +3253,7 @@ function HelicopterStart()
         if self.StartAlpha <= 0 then
 
             timer.Simple(25, function()
-				--FadeMusic(18)
+				--StopMusic(18)
 			end)
 
             self:Remove()

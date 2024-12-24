@@ -1,7 +1,7 @@
 function IntroSound()
 	local client = LocalPlayer()
 	if client:GTeam() != TEAM_GUARD then
-		FadeMusic(1)
+		StopMusic(1)
 	end
 	if client:GTeam() == TEAM_GUARD then
 		surface.PlaySound("nextoren/start_round/start_round_mtf.mp3")

@@ -31,7 +31,7 @@ english.NRegistry = {
 
 english.NFailed = "Filed to access NRegistry with key: %s"
 
-english.version_title = "Ares Breach 1.0"
+english.version_title = "Ares Breach " .. BREACH.Version
 english.version = "Beta Stage"
 english.bugs = "Report bugs!"
 

@@ -20,7 +20,7 @@ function PLAYER:GetVoiceTable()
         return voices.russian
     end
 
-    if model:find("goc") and self:GetRoleName() ~= "GOC Spy" then
+    if model:find("goc") and self:GetRoleName() != "GOC Spy" then
         return voices.goc
     end
 

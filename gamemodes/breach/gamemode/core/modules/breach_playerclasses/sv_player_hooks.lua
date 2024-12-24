@@ -14,11 +14,6 @@ util.AddNetworkString("Shaky_PARTICLEATTACHSYNC")
 local mply = FindMetaTable'Player'
 local ment = FindMetaTable'Player'
 
-function BroadcastStopMusic()
-	net.Start("ClientStopMusic")
-	net.Broadcast()
-end
-
 net.Receive("camera_swap", function(len, ply)
 	local status = net.ReadBool()
 
@@ -137,16 +132,33 @@ function PlayAnnouncer( soundname )
 	net.Broadcast()
 end
 
-function BroadcastPlayMusic( vsrf_flot )
-    net.Start( "ClientPlayMusic" )
-	    net.WriteUInt( vsrf_flot, 32 )
-	net.Broadcast()
+function BroadcastStopMusic(ply)
+	net.Start("ClientStopMusic")
+
+	if not ply then
+		net.Broadcast()
+	elseif istable(ply) then
+		for _, v in ipairs(ply) do
+			net.Send(v)
+		end
+	elseif IsValid(ply) then
+		net.Send(ply)
+	end
 end
 
-function mply:PlayMusic( vsrf_flot )
-    net.Start( "ClientPlayMusic" )
-	    net.WriteUInt( vsrf_flot, 32 )
-	net.Send(self)
+function BroadcastPlayMusic(ply, vsrf_flot)
+	net.Start("ClientPlayMusic")
+	net.WriteUInt( vsrf_flot, 32 )
+
+	if not ply then
+		net.Broadcast()
+	elseif istable(ply) then
+		for _, v in ipairs(ply) do
+			net.Send(v)
+		end
+	elseif IsValid(ply) then
+		net.Send(ply)
+	end
 end
 
 net.Receive("NTF_Special_1", function(len, ply)
@@ -404,6 +416,8 @@ function GM:PlayerDeath(victim, inflictor, attacker )
 		end
 	end
 
+	victim:SendLua("HideEQ()")
+
 	if attacker != victim and attacker:IsPlayer() then
 		if IsTeamKill(victim, attacker) then
 			BREACH.Players:ChatPrint( attacker, true, true, "l:teamkill_you_teamkilled " , victim:Nick() , " " , gteams.GetColor(victim:GTeam()) ,victim:GetRoleName() , " " , Color(255,255,255), " " , victim:SteamID() , "")
@@ -535,83 +549,62 @@ function GM:PlayerDisconnected( ply )
 	end
 end
 
-function HaveRadio(pl1, pl2)
-	if pl1:HasWeapon("item_radio") then
-		if pl2:HasWeapon("item_radio") then
-			local r1 = pl1:GetWeapon("item_radio")
-			local r2 = pl2:GetWeapon("item_radio")
-			if !IsValid(r1) or !IsValid(r2) then return false end
-			if r1.Enabled == true then
-				if r2.Enabled == true then
-					if r1.Channel == r2.Channel then
-						if r1.Channel > 4 then
-							return true
-						end
-					end
-				end
-			end
-		end
-	end
-	return false
-end
-
 -- Voice Control
-local voice_distance = 0x57E40 -- 360000 ( 600^2 )
+local voice_distance = 360000 -- 0x57E40 перф апдейт!!
+local hear_table = {}
 
-local function Declare_Value(listener, speaker)
-    local isindist = listener:EyePos():DistToSqr(speaker:EyePos()) < voice_distance
-    return isindist, isindist
+local function CanHear(listener, speaker)
+    return listener:EyePos():DistToSqr(speaker:EyePos()) < voice_distance
 end
 
-local hear_table = {}
 local function CalcVoice(client, players)
     for i = 1, #players do
         local speaker = players[i]
-        if hear_table[client][speaker] == nil and client != speaker then
-            local canhearspeaker, canhearlistener = Declare_Value(client, speaker)
-            hear_table[client][speaker] = canhearspeaker
-            hear_table[speaker][client] = canhearlistener
+        if client ~= speaker then
+            hear_table[client] = hear_table[client] or {}
+            hear_table[speaker] = hear_table[speaker] or {}
+
+            if hear_table[client][speaker] == nil then
+                local can_hear = CanHear(client, speaker)
+                hear_table[client][speaker] = can_hear
+                hear_table[speaker][client] = can_hear
+            end
         end
     end
 end
 
-local function CreateVoiceTable()
-    local clients = {}
-    local all_players_table = player.GetAll()
-    for i = 1, #all_players_table do
-        local speaker = all_players_table[i]
-        clients[#clients + 1] = speaker
-        hear_table[speaker] = {}
-    end
+local function UpdateVoiceTable()
+    local players = player.GetAll()
 
-    for j = 1, #clients do
-        CalcVoice(clients[j], clients)
+    for i = 1, #players do
+		local pl = players[i]
+        CalcVoice(pl, players)
     end
 end
 
 timer.Create("CalcVoice", .5, 0, function()
-	CreateVoiceTable() 
+    UpdateVoiceTable()
 end)
 
-local roleswhitelist = {
+local allowedscp = {
 	[role.SCP049] = true,
 }
 
-function GM:PlayerCanHearPlayersVoice(listener, talker)
-    if not (talker:Alive() and listener:Alive()) then
-        return false
-    end
-
-    local talkerteam = talker:GTeam()
+local function hearlogic(listener, talker)
     local talkerrole = talker:GetRoleName()
+    local talkerteam = talker:GTeam()
     local listenerteam = listener:GTeam()
 
-    if talkerteam == TEAM_SPEC and listenerteam == TEAM_SPEC then
-        return true
+	if not listener:GetNWBool("Player_IsPlaying") then
+        return false
     end
 
-    if not listener:GetNWBool("Player_IsPlaying") then
-        return false
+	if postround then -- так сказано
+		return true
+	end
+
+    if talkerteam then
+        return listenerteam == TEAM_SPEC
     end
 
     if talker:GetNWBool("IntercomTalking") then
@@ -622,73 +615,38 @@ function GM:PlayerCanHearPlayersVoice(listener, talker)
         return false
     end
 
+    if talkerteam == TEAM_SCP then
+        if (allowedscp and allowedscp[talkerrole] and listenerteam ~= TEAM_SCP) or listenerteam == TEAM_DZ then
+            return true
+        end
+        return listenerteam == TEAM_SCP
+    end
+
     if listenerteam == TEAM_SPEC then
         local spectarget = listener:GetObserverTarget()
         if IsValid(spectarget) then
             if spectarget == talker then
                 return true
-            elseif hear_table[spectarget] and hear_table[spectarget][talker] then
+            elseif hear_table and hear_table[spectarget] and hear_table[spectarget][talker] then
                 return true
             end
         end
     end
 
-    if talkerteam == TEAM_SCP then
-        if listenerteam == TEAM_SCP then
-            return true
-        elseif listenerteam != TEAM_SCP and listenerteam != TEAM_DZ and not roleswhitelist[talkerrole] then
-            return false
-        end
-    end
+    return hear_table and hear_table[listener] and hear_table[listener][talker] or false
+end
 
-    return hear_table[listener] and hear_table[listener][talker] or false
+function GM:PlayerCanHearPlayersVoice(listener, talker)
+    if not (talker:Alive() and listener:Alive()) then return false end
+
+	return hearlogic(listener, talker)
 end
 
 function GM:PlayerCanSeePlayersChat(text, teamOnly, listener, talker)
-    if not (talker:Alive() and listener:Alive()) then
-        return false
-    end
+    if not (talker:Alive() and listener:Alive()) then return false end
 
-    local talkerteam = talker:GTeam()
-    local talkerrole = talker:GetRoleName()
-    local listenerteam = listener:GTeam()
 
-    if not listener:GetNWBool("Player_IsPlaying") then
-        return false
-    end
-
-    if talker:GetNWBool("IntercomTalking") then
-        return true
-    end
-
-    if talker.supported then
-        return false
-    end
-
-	if talkerteam == TEAM_SPEC and listenerteam == TEAM_SPEC then
-        return true
-    end
-
-    if listenerteam == TEAM_SPEC then
-        local spectarget = listener:GetObserverTarget()
-        if IsValid(spectarget) then
-            if spectarget == talker then
-                return true
-            elseif hear_table[spectarget] and hear_table[spectarget][talker] then
-                return true
-            end
-        end
-    end
-
-    if talkerteam == TEAM_SCP then
-        if listenerteam == TEAM_SCP then
-            return true
-        elseif listenerteam != TEAM_SCP and listenerteam != TEAM_DZ and not roleswhitelist[talkerrole] then
-            return false
-        end
-    end
-
-    return hear_table[listener] and hear_table[listener][talker] or false
+	return hearlogic(listener, talker)
 end
 
 hook.Add("PlayerSay", "no_support_chat", function(ply, text, teamChat)
@@ -1174,20 +1132,15 @@ function GM:PlayerUse(ply, ent)
                     end
                 end
 
-                if v.custom_access_granted then
-					if v.name:find("КПП") then
-						if SCPLockDownHasStarted == true then
-							return CheckAccess(ply, v, ent)
-						else
-							AccessDenied(ply, ent, true, false, true)
-							return false	
-						end
-					end
-
-                    if v.custom_access_granted(ply, ent) == true then
-						AccessGranted(ply, ent, true, false, true)
-						return true
-					else
+				if v.custom_access_granted then
+                    if v.name:find("КПП") then
+                        if SCPLockDownHasStarted == true then
+                            return CheckAccess(ply, v, ent)
+                        else
+                            AccessDenied(ply, ent, true, false, true)
+                            return false
+                        end
+                    elseif not v.custom_access_granted(ply, ent) then
                         AccessDenied(ply, ent, true, false, true)
                         return false
                     end
@@ -1200,9 +1153,7 @@ function GM:PlayerUse(ply, ent)
                             return true
                         end
                     end
-					
-					--return CheckAccess(ply, v, ent)
-                end
+				end
 
                 return CheckAccess(ply, v, ent)
             end

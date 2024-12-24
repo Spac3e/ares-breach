@@ -94,7 +94,7 @@ function ENT:RemoveMonitor()
 end
 
 function ENT:StartNuke()
-    for _, v in ipairs(player.GetAll()) do v:bSendLua('FadeMusic(1)') end
+    for _, v in ipairs(player.GetAll()) do v:bSendLua('StopMusic(1)') end
 
     self:StartNukeSequence()
 
@@ -163,7 +163,7 @@ function ENT:ResumeNuke()
     local closestdiff = math.huge
 
     for _, v in ipairs(player.GetAll()) do
-        v:SendLua('FadeMusic(1)')
+        v:SendLua('StopMusic(1)')
     end
 
     self:StartNukeSequence()

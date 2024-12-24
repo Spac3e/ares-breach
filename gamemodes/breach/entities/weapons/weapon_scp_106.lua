@@ -162,7 +162,7 @@ if ( SERVER ) then
 
 		local body_origin = CheckLabirintRandom( false, player_pos )
 
-		player:PlayMusic(BR_MUSIC_DIMENSION_SCP106)
+		BroadcastPlayMusic(player, BR_MUSIC_DIMENSION_SCP106)
 	
 		net.Start( "DimensionSequence" )
 	
@@ -190,6 +190,7 @@ if ( SERVER ) then
 		player.Dimension_TouchEntity.TouchFunc = function( self, player )
 				net.Start( "DimensionSequence" )
 				net.Send( player )
+				BroadcastStopMusic(player)
 				player:Freeze( true )
 		  player.canblink = nil
 				timer.Simple( .25, function()

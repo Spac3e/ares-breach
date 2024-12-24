@@ -59,16 +59,18 @@ PLAYER.SetupDataTables = function(self)
 	ply:NetworkVar( "Bool", 6, "Female" )
 	ply:NetworkVar( "Bool", 7, "Stunned" )
 	ply:NetworkVar( "Bool", 8, "InDimension")
-	
+
 	if SERVER then
 		ply:SetRoleName("Spectator")
 		ply:SetNamesurvivor( "none" )
 		ply:SetLastRole( "" )
 		ply:SetLastTeam( 0 )
 
-		BREACH.DataBaseSystem:LoadPlayer(ply, function()
-			print("[Ares Breach MYSQLOO] Data for " .. ply:Nick() .." has been set successfuly!")
-		end)
+		if BREACH.DataBaseSystem then
+			BREACH.DataBaseSystem:LoadPlayer(ply, function()
+				BREACH.DataBaseSystem:Log("Data was successfully loaded for " .. ply:Nick())
+			end)
+		end
 
 		ply:SetNGTeam(1)
 		ply:SetNActive(true)

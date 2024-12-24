@@ -377,7 +377,8 @@ function CloseCheckpoints()
 end
 
 function PreEvacTemp()
-    BroadcastPlayMusic(BR_MUSIC_EVACUATION)
+    BroadcastPlayMusic(nil, BR_MUSIC_EVACUATION)
+
     for k,v in pairs(player.GetAll()) do 
 		v:BrTip(0, '[Ares Breach]', Color(255, 0, 0), 'l:evac_start_leave_immediately', Color(255, 0, 0)) 
     end 

@@ -31,7 +31,7 @@ russian.NRegistry = {
 
 russian.NFailed = "Failed to access NRegistry with key: %s"
 
-russian.version_title = "Ares Breach 1.0"
+russian.version_title = "Ares Breach " .. BREACH.Version
 russian.version = "Стадия Бета Тестирования"
 russian.bugs = "Сообщайте об ошибках!"--"ATTENTION! THERE ARE CRITICAL BUGS, PLEASE REPORT THEM TO THE BUG-REPORT CHANNEL"
 

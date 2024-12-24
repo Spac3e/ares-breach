@@ -164,8 +164,8 @@ hook.Add( "KeyPress", "KeyPressForRagdoll", function( ply, key )
 			--ply.MovementLocked = true
 
 			net.Start( "OpenLootMenu" )
-				net.WriteTable( self.vtable )
-				net.WriteTable( self.vtable.Ammo )
+				net.WriteTable( self.vtable or {} )
+				net.WriteTable( self.vtable.Ammo or {} )
 			net.Send( ply )
 
 			net.Start("LootEnd")

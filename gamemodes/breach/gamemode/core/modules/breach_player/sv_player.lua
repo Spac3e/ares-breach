@@ -532,6 +532,8 @@ function mply:SetupNormal()
 		v:Remove()
 	end
 
+	self:SetNWBool("observerLight", false)
+
 	self:StopIgniteSequence()
 	self:ClearBodyGroups()
 
@@ -832,8 +834,10 @@ local shittyenum = {
 }
 
 function mply:ApplyRoleStats(role)
-	self:SetupNormal()
+	BroadcastStopMusic(self)
 
+	self:SendLua("HideEQ()")
+	self:SetupNormal()
 	self:SetRoleName( role.name )
 	self:SetGTeam( role.team )
 

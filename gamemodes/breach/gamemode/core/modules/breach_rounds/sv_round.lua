@@ -160,7 +160,7 @@ function RoundEnd(result, fake)
 		end
 	end)
 
-	for _, v in player.Iterator() do v:bSendLua("FadeMusic(1) surface.PlaySound('nextoren/ending/nuke.mp3')") end
+	for _, v in player.Iterator() do v:bSendLua("StopMusic(1) surface.PlaySound('nextoren/ending/nuke.mp3')") end
 
 	net.Start("New_RoundStatistics") 
 		net.WriteString(result)
@@ -285,7 +285,7 @@ function CheckRoundStart()
             SetGlobalBool("EnoughPlayersCountDown", true)
             SetGlobalInt("EnoughPlayersCountDownStart", CurTime() + time)
         
-			BroadcastPlayMusic(BR_MUSIC_COUNTDOWN)
+			BroadcastPlayMusic(nil, BR_MUSIC_COUNTDOWN)
 
 			timer.Simple(time - 4, function()
 				for _, v in player.Iterator() do 

@@ -47,7 +47,6 @@ function ENT:Detonate()
     self.wentBoomAlready = true
     self:StopParticles()
 
-    local t = 60
     local dn = Vector(0, 0, -64000)
     local td = {mask = MASK_NPCWORLDSTATIC}
     local tr
@@ -63,12 +62,13 @@ function ENT:Detonate()
         
         self.Think = function()
             for _, ent in pairs(ents.FindInSphere(self:GetPos(), 250)) do
-                if IsValid(ent) and ent:IsPlayer() then
+                if IsValid(ent) and IsValid(self) and ent:IsPlayer() then
+                    print(ent)
                     ent:IgniteSequence(6)
                 end
             end
         
-            return self:NextThink( CurTime() + .75 )        
+            return self:NextThink( CurTime() + .75 )
         end
 
         self:SetNoDraw(true)
@@ -81,15 +81,7 @@ function ENT:Detonate()
         if tr.Hit then
             self:SetPos(tr.HitPos)
         end
-
-        t = 2
     end
 
-    SafeRemoveEntityDelayed(self, t)
-end
-
-function ENT:Think()
-    if self:WaterLevel() != 0 then
-        self:Detonate()
-    end
+    SafeRemoveEntityDelayed(self, 30)
 end

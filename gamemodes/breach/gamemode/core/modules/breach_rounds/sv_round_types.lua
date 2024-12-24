@@ -72,7 +72,7 @@ local function SetupRoundTimers()
 			PlayAnnouncer('nextoren/round_sounds/main_decont/decont_10_b.mp3')	
 		end)
 
-		Event("FunnyDecontMusic", 390, function() BroadcastPlayMusic(BR_MUSIC_LIGHTZONE_DECONT) end)
+		Event("FunnyDecontMusic", 390, function() BroadcastPlayMusic(nil, BR_MUSIC_LIGHTZONE_DECONT) end)
 
 		Event("Decont1Min", 420, function() 
 			for k, v in pairs(player.GetAll()) do
@@ -111,7 +111,7 @@ local function SetupRoundTimers()
 			OpenSCPDoors()
 		end)
 
-		Event("FunnyDecontMusic", 250, function() BroadcastPlayMusic(BR_MUSIC_LIGHTZONE_DECONT) end)
+		Event("FunnyDecontMusic", 250, function() BroadcastPlayMusic(nil, BR_MUSIC_LIGHTZONE_DECONT) end)
 
 		Event("Decont1Min", 270, function() 
 			for k, v in pairs(player.GetAll()) do

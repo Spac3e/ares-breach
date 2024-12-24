@@ -329,7 +329,7 @@ function SWEP:DrawWorldModel()
 
     if ( self.Charging ) then
 
-      pl.wep_dlight = DynamicLight()
+      pl.wep_dlight = DynamicLight(pl:EntIndex())
       if ( pl.wep_dlight ) then
 
         pl.wep_dlight.pos = pl:GetShootPos()

@@ -150,7 +150,7 @@ function PANEL:PerformLayout()
     self.version:SetPos(w - self.version:GetWide() - 5, 72 + 17)
     self.version:SizeToContents()
     surface.SetFont("ScoreboardHeader")
-    local hname = "[Ares] Breach 1.0"
+    local hname = "Ares Breach " .. BREACH.Version
     local tw, _ = surface.GetTextSize(hname)
     while tw > hw do
         hname = string.sub(hname, 1, -6) .. "..."

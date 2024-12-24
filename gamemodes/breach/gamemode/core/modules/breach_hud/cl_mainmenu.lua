@@ -631,7 +631,7 @@ function StartBreach(firsttime)
         surface.SetMaterial(gradients)
         surface.DrawTexturedRect(100, 80 + offset_height, 305, 3)
         draw.RoundedBox(0, 100, 60, 305, 3, color_white)
-        draw.DrawText("Beta-Testing Stage | Version 1.0", "ScoreboardContent", 105, 65)
+        draw.DrawText("Beta-Testing Stage | Version " .. BREACH.Version, "ScoreboardContent", 105, 65)
         if weareprecaching then
             draw.RoundedBox(0, scrw * 0.44, scrh * 0.487, scrw * 0.12, scrh * 0.03, Color(0, 0, 0))
             draw.SimpleText(L"l:precaching_resources", "MainMenuFont", scrw * 0.5, scrh * 0.5, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)

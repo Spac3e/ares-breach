@@ -574,7 +574,7 @@ function CorpsedMessage(msg)
 
 				if ( self.StartAlpha <= 0 ) then
 
-					FadeMusic( 10 )
+					StopMusic( 10 )
 					self:Remove()
 
 				end
@@ -1153,7 +1153,7 @@ local function BreachVersionIndicator()
 
 	if ( LocalPlayer():Health() <= 0 ) then return end
 	if clang == nil then return end
-	if LocalPlayer():GetTable().IN_106_DIMENSION then return end
+	if LocalPlayer():GetInDimension() then return end
 	if hide_title:GetInt() == 1 then return end
 	local clang = clang
 

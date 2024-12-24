@@ -63,7 +63,7 @@ function ClientSpawnHelicopter()
                 entcall.StopInventory = false
                 timer.Simple(23, function()
                     if entcall and entcall:IsValid() and entcall:IsPlayer() then
-                        FadeMusic(9)
+                        StopMusic(9)
                         timer.Simple(6, function() BREACH.Music:PickGenericSong() end)
 						helicopter:StopSound("nextoren/others/helicopter/apache_hover.wav")
                         helicopter:Remove()
@@ -1882,7 +1882,7 @@ function EndRoundStats()
 	general_panel.StartFade = false
 	timer.Simple( ( t_restart || 27 ) + 1, function()
 
-		FadeMusic( 2 )
+		StopMusic( 2 )
 
 		if ( general_panel && general_panel:IsValid() ) then
 
@@ -2320,6 +2320,7 @@ local universal_clr = Color( 210, 0, 0, 180 )
 net.Receive("OpenLootMenu", function(len)
     local vtab = net.ReadTable()
     local ammo = net.ReadTable()
+	
     ShowEQ( false, vtab, ammo )
 end)
 
@@ -2888,10 +2889,6 @@ function DropCurrentVest()
 		net.SendToServer()
 	end
 end
-
-concommand.Add( "br_dropuniform", function( ply, cmd, args )
-	DropCurrentVest()
-end )
 
 concommand.Add( "br_roundrestart_cl", function( ply, cmd, args )
 	if ply:IsSuperAdmin() then
@@ -3589,16 +3586,6 @@ net.Receive( "CameraDetect", function( len )
 	end
 end )
 
-hook.Add( "OnPlayerChat", "CheckChatFunctions", function( ply, strText, bTeam, bDead )
-	strText = string.lower( strText )
-
-	if ( strText == "dropvest" ) then
-		if ply == LocalPlayer() then
-			DropCurrentVest()
-		end
-		return true
-	end
-end)
 
 // Blinking system
 
@@ -4113,7 +4100,7 @@ function OBRStart()
 
 				if ( LocalPlayer():GTeam() == TEAM_QRT ) then
 
-					FadeMusic( 10 )
+					StopMusic( 10 )
 
 				end
 

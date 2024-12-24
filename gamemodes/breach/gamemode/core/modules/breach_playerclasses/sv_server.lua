@@ -198,24 +198,29 @@ net.Receive("catch_breath", function(len, ply)
     end)
 end)
 
-net.Receive("SendPrefixData", function(data)
-	net.ReadString(prefix)
-	net.ReadBool(enabled)
-	net.ReadString(color)
-	net.ReadBool(rainbow)
+net.Receive("SendPrefixData", function(len, ply)
+    local prefix = net.ReadString()
+    local enabled = net.ReadBool()
+    local color = net.ReadString()
+    local rainbow = net.ReadBool()
+
+    local colt = string.Explode(",", color)
+    local r = tonumber(colt[1]) or 255
+    local g = tonumber(colt[2]) or 255
+    local b = tonumber(colt[3]) or 255
+
+    ply:SetNWBool("prefix_active", enabled)
+    ply:SetNWString("prefix_title", prefix)
+    ply:SetNWString("prefix_color", color)
+    ply:SetNWBool("prefix_rainbow", rainbow)
 end)
+
 
 net.Receive( "DropWeapon", function( len, ply )
 	local class = net.ReadString()
 
 	if class then
 		ply:ForceDropWeapon( class )
-	end
-end )
-
-net.Receive( "CancelPunish", function( len, ply )
-	if ply:IsSuperAdmin() then
-		CancelVote()
 	end
 end )
 
@@ -237,26 +242,6 @@ net.Receive( "Restart", function( len, ply )
 	end
 end)
 
-net.Receive( "Sound_Random", function( len, ply )
-	PlayerNTFSound("Random"..math.random(1,4)..".ogg", ply)
-end)
-
-net.Receive( "Sound_Searching", function( len, ply )
-	PlayerNTFSound("Searching"..math.random(1,6)..".ogg", ply)
-end)
-
-net.Receive( "Sound_Classd", function( len, ply )
-	PlayerNTFSound("ClassD"..math.random(1,4)..".ogg", ply)
-end)
-
-net.Receive( "Sound_Stop", function( len, ply )
-	PlayerNTFSound("Stop"..math.random(2,6)..".ogg", ply)
-end)
-
-net.Receive( "Sound_Lost", function( len, ply )
-	PlayerNTFSound("TargetLost"..math.random(1,3)..".ogg", ply)
-end)
-
 net.Receive( "DropCurrentVest", function( len, ply )
 	if ply:GTeam() != TEAM_SPEC and ( ply:GTeam() != TEAM_SCP or ply:GetRoleName() == role.SCP9571 ) and ply:Alive() then
 		if ply.GetUsingCloth != nil then
@@ -271,22 +256,6 @@ function IsValidSteamID( id )
 	end
 	return false
 end
-
---net.Receive( "RequestGateA", function( len, ply )
---	RequestOpenGateA(ply)
---end)
-
-net.Receive( "NTFRequest" , function( len, ply )
-	if ply:IsSuperAdmin() then
-		SpawnNTFS()
-	end
-end )
-
-net.Receive( "ExplodeRequest", function( len, ply )
-	if ply:GetRoleName() == role.MTFNTF or ply:GetRoleName() == role.CHAOS then
-		explodeGateA( ply )
-	end
-end )
 
 net.Receive( "DropCurWeapon", function( len, ply )
 	local wep = ply:GetActiveWeapon()
@@ -312,123 +281,6 @@ cvars.AddChangeCallback( "br_roundrestart", function( convar_name, value_old, va
 	RunConsoleCommand("br_roundrestart", "0")
 end )
 
-function SetupAdmins( players )
-	for k, v in pairs( players ) do
-		if v.admpref then
-			if !v.AdminMode then
-				v:ToggleAdminMode()
-			end
-			v:SetupAdmin()
-		elseif v.AdminMode then
-			v:ToggleAdminMode()
-		end
-	end
-end
-
-function GiveExp()
-	for k, v in player.Iterator() do
-		local exptogive = v:Frags() * 50
-		v:SetFrags( 0 )
-		if exptogive > 0 then
-			v:AddExp( exptogive, true )
-			v:PrintMessage( HUD_PRINTTALK, "You have recived "..exptogive.." experience for "..(exptogive / 50).." points" )
-		end
-	end
-end
-
-activevote = false
-suspectname = ""
-activesuspect = nil
-activevictim = nil
-votepunish = 0
-voteforgive = 0
-specpunish = 0
-specforgive = 0
-
-function PunishVote( ply, victim )
-	if GetConVar( "br_allow_punish" ):GetInt() == 0 then return end
-	if ply == victim then return end
-	if activevote then
-		EndPunishVote()
-		timer.Destroy( "PunishEnd" )
-	end
-	net.Start( "ShowText" )
-		net.WriteString( "text_punish" )
-		net.WriteString( ply:GetName() )
-	net.Broadcast()
-	activevote = true
-	votepunish = 0
-	voteforgive = 0
-	specpunish = 0
-	specforgive = 0
-	suspectname = ply:GetName()
-	activesuspect = ply:SteamID64()
-	activevictim = victim:SteamID64()
-	timer.Create( "PunishEnd", GetConVar( "br_punishvote_time" ):GetInt(), 1, function()
-		EndPunishVote()
-	end )
-end
-
-function EndPunishVote()
-	local specvotedforgive = math.Round( 3 * specforgive / ( specpunish + specforgive ) )
-	if tostring( specvotedforgive ) != "nan" then
-		voteforgive = voteforgive + specvotedforgive
-		votepunish = votepunish + ( 3 - specvotedforgive )
-	end
-	print( "Player: "..suspectname, " Forgive: "..voteforgive, "Punish: "..votepunish )
-	activevote = false
-	for k,v in player.Iterator() do
-		v.voted = false
-	end
-	local result = {
-		punish = votepunish > voteforgive,
-		punishvotes = votepunish,
-		forgivevotes = voteforgive,
-		punished = suspectname
-	}
-	net.Start( "ShowText" )
-		net.WriteString( "text_punish_end" )
-		net.WriteTable( result )
-	net.Broadcast()
-	if votepunish > voteforgive then
-		for k,v in player.Iterator() do
-			if v:SteamID64() == activesuspect then
-				if v.warn then
-					v:Kill()
-				else
-					v.warn = true
-				end
-				break
-			end
-		end
-	end
-	suspectname = ""
-	activesuspect = nil
-	activevictim = nil
-end
-
-function CancelVote()
-	timer.Destroy( "PunishEnd" )
-	net.Start( "ShowText" )
-		net.WriteString( "text_punish_cancel" )
-	net.Broadcast()
-	activevote = false
-	suspectname = ""
-	activesuspect = nil
-	activevictim = nil
-	votepunish = 0
-	voteforgive = 0
-	specpunish = 0
-	specforgive = 0
-end
-
-hook.Add("OnEntityCreated", "skin_the_colour_of_bark", function( ent )
-	--if IsValid(ent) then
-		--if ent:GetClass() == "color_correction" or ent:GetClass() == "Info_Target" or ent:GetClass() == "trigger_once" or ent:GetClass() == "trigger_once" then
-		--	ent:Remove()
-		--end
-	--end
-end)
 
 concommand.Add("nodamage", function(ply, cmd, args)
     if !args[1] then
@@ -465,3 +317,11 @@ hook.Add("PlayerShouldTakeDamage", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 		return false
 	end
 end)
+
+util.AddNetworkString("hideinventory")
+
+function mply:HideEQ(bool)
+	net.Start("hideinventory")
+		net.WriteBool(bool)
+	net.Send(self)
+end
