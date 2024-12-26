@@ -265,8 +265,7 @@ function GM:PlayerHurt(victim, attacker, health, damage)
 	end
 
 	if victim:WouldDieFrom(damage) then
-		victim:Voice("die")
-		return
+		return victim:Voice("die")
 	end
 
     if !((victim.NextPain or 0) < CurTime() and health > 0) then return end

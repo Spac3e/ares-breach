@@ -52,7 +52,7 @@ local volumes = {
     panic = "breach_config_music_panic_volume",
 }
 
-local music_table = include(GM.FolderName .. "/gamemode/core/modules/breach_ui/music.lua")
+local music_table = include(GM.FolderName .. "/gamemode/modules/breach_ui/music.lua")
 local mainmusic = GetConVar("breach_config_overall_music_volume")
 
 local cvarscachetbl = {}

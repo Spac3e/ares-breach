@@ -1,4 +1,3 @@
--- [[ Global Locals ]]--
 BREACH = BREACH or {
 	Util = {},
 	Meta = {},
@@ -20,7 +19,7 @@ BREACH.Music.Custom_Volumes = {
 
 	["heavy_zone_5.ogg"] = 0.3,
 	["heavy_zone_2.ogg"] = 0.8,
-	["uiu_mission_complete.ogg"] = 1.4,		
+	["uiu_mission_complete.ogg"] = 1.4,
 }
 
 BREACH.ZombieTextureMaterials = {
@@ -63,9 +62,9 @@ function BREACH.Msg(message, color, ...)
     color = color or Color(255, 255, 255)
     local timestamp = os.date("[%H:%M:%S]", os.time())
     local prefix = "[Ares Breach]"
-    local formattedMessage = string.format(message, ...)
+    message = string.format(message, ...)
 
-    MsgC(Color(0, 122, 204), prefix, Color(200, 200, 200), " " .. timestamp .. " ", color, formattedMessage .. "\n")
+    MsgC(Color(0, 122, 204), prefix, Color(200, 200, 200), " " .. timestamp .. " ", color, message .. "\n")
 end
 
 function BREACH.Include(path, noprint)
@@ -92,14 +91,18 @@ function BREACH.Include(path, noprint)
     else
         if not path:find("sv_") then
             if not noprint then
-                local fileType = path:find("cl_") and "CLIENT" or "SHARED"
+                local filetype = path:find("cl_") and "CLIENT" or "SHARED"
                 local color = path:find("cl_") and Color(0, 255, 255) or Color(255, 255, 0)
-                BREACH.Msg("Loading " .. fileType .. " file: " .. path, color)
+                BREACH.Msg("Loading " .. filetype .. " file: " .. path, color)
             end
             return include(path)
         end
     end
 end
+
+local gmignore = {
+    ["sh_boot.lua"] = true
+}
 
 function BREACH.IncludeDir(path, bRecursive, exclude)
     if not path:EndsWith("/") then
@@ -110,15 +113,28 @@ function BREACH.IncludeDir(path, bRecursive, exclude)
     local files, folders = file.Find(dir .. "*", "LUA")
 
     if exclude and istable(exclude) then
-        files = table.Filter(files, function(_, v) return not string.find(v, exclude) end)
-        folders = table.Filter(folders, function(_, v) return not string.find(v, exclude) end)
+        files = table.Filter(files, function(_, v)
+            for _, pattern in ipairs(exclude) do
+                if v == pattern then return false end
+            end
+            return true
+        end)
+
+        folders = table.Filter(folders, function(_, v)
+            for _, pattern in ipairs(exclude) do
+                if v == pattern then return false end
+            end
+            return true
+        end)
     end
 
     local formatedpath = path:match("([^/]+)/?$") or "Unknown"
     BREACH.Msg(string.format("Loading folder: %s (%d files, %d subfolders)", formatedpath, #files, #folders), Color(255, 165, 0))
 
     for _, filename in ipairs(files) do
-        BREACH.Include(path .. filename, true)
+        if string.Right(filename, 4) == ".lua" and not gmignore[filename] then
+            BREACH.Include(path .. filename, true)
+        end
     end
 
     if bRecursive then

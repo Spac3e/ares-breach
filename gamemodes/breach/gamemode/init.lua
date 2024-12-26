@@ -1,10 +1,10 @@
 -- Send the following files to players.
 AddCSLuaFile("cl_init.lua")
-AddCSLuaFile("core/sh_core.lua")
+AddCSLuaFile("libraries/sh_boot.lua")
 AddCSLuaFile("shared.lua")
 
 -- Include utility functions, data storage functions, and then shared.lua
-include("core/sh_core.lua")
+include("libraries/sh_boot.lua")
 include("shared.lua")
 
 function LoadMapConfig()

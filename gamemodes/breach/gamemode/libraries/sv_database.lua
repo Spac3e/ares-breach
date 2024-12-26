@@ -30,7 +30,7 @@ function BREACH.DataBaseSystem:Initialize()
             exp INT NOT NULL,
             PRIMARY KEY (`steamid`)
         );
-    ]]) -- Primary key here nado!
+    ]])
 end
 
 function BREACH.DataBaseSystem:LoadPlayer(ply, callback)

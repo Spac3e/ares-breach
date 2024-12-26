@@ -13,8 +13,9 @@ function GM:Initialize()
 	self.BaseClass.Initialize( self )
 end
 
-BREACH = BREACH || {}
-BREACH.Version = "1.2 Experimental"
+local starttime = SysTime()
+
+BREACH.Version = "1.2.1"
 
 TEAM_SCP = 1
 TEAM_GUARD = 2
@@ -42,22 +43,24 @@ ALLLANGUAGES = {}
 russian = russian or {}
 nontranslated = {}
 
-BREACH.IncludeDir("core/libraries/thirdparty")
-BREACH.IncludeDir("core/libraries")
-BREACH.Include("core/sh_core.lua")
+BREACH.IncludeDir("libraries/thirdparty")
+BREACH.IncludeDir("utils")
+BREACH.IncludeDir("libraries")
 
 if SERVER then
-    AddCSLuaFile("core/modules/breach_ui/music.lua")
-    AddCSLuaFile("core/modules/breach_module/cl_module.lua")
-    AddCSLuaFile("core/modules/breach_module/sh_module.lua")
-    include("core/modules/breach_module/sv_module.lua")
-    include("core/modules/breach_module/sh_module.lua")
+    AddCSLuaFile("modules/breach_ui/music.lua")
+    AddCSLuaFile("modules/breach_module/cl_module.lua")
+    AddCSLuaFile("modules/breach_module/sh_module.lua")
+    include("modules/breach_module/sv_module.lua")
+    include("modules/breach_module/sh_module.lua")
 else
-    include("core/modules/breach_module/cl_module.lua")
-    include("core/modules/breach_module/sh_module.lua")
-    include("core/modules/breach_ui/music.lua")
+    include("modules/breach_module/cl_module.lua")
+    include("modules/breach_module/sh_module.lua")
+    include("modules/breach_ui/music.lua")
 end
 
 BREACH.IncludeDir("configs")
 BREACH.IncludeDir("configs/languages")
-BREACH.IncludeDir("core/modules", true)
+BREACH.IncludeDir("modules", true)
+
+BREACH.Msg("Gamemode was loaded in " .. math.Round(SysTime() - starttime, 2))

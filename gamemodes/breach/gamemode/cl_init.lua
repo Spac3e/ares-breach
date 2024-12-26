@@ -5,5 +5,5 @@ function OUTSIDE_BUFF( pos )
 end
 
 -- [[ Include Gamemode files ]] --
-include("core/sh_core.lua")
+include("libraries/sh_boot.lua")
 include("shared.lua")

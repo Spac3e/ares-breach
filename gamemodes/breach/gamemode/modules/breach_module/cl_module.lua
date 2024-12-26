@@ -3832,8 +3832,6 @@ function GM:PlayerBindPress( ply, bind, pressed )
 			CloseRoleMenu()
 
 		end
-	elseif bind == "+menu_context" then
-		thirdpersonenabled = !thirdpersonenabled
 	elseif bind == "noclip" and ply:IsAdmin() then
 		RunConsoleCommand("ulx", "noclip")
 	end
@@ -3936,80 +3934,6 @@ concommand.Add("br_sound_lost", function()
 		net.SendToServer()
 	end
 end)
-/*
-function CalcView3DPerson( ply, pos, angles, fov )
-	local view = {}
-	view.origin = pos
-	view.angles = angles
-	view.fov = fov
-	view.drawviewer = false
-	if thirdpersonenabled then
-		local eyepos = ply:EyePos()
-		local eyeangles = ply:EyeAngles()
-		local point = ply:GetEyeTrace().HitPos
-		local goup = 2
-		if ply:Crouching() then
-			goup = 20
-		end
-		view.drawviewer = true
-		view.origin = eyepos + Vector(0,0,goup) - (eyeangles:Forward() * 30) + (eyeangles:Right() * 20)
-		view.angles = (point - view.origin):Angle()
-		local endps = eyepos + Vector(0,0,goup) - (eyeangles:Forward() * 30) + (eyeangles:Right() * 15)
-		local tr = util.TraceLine( { start = eyepos, endpos = endps} )
-		if tr.Hit then
-			view.origin = tr.HitPos
-		end
-	end
-	return view
-end
-hook.Add( "CalcView", "CalcView3DPerson", CalcView3DPerson )
-*/
-
-/*function GM:HUDDrawPickupHistory()
-
-end*/
-
-/*function GM:HUDWeaponPickedUp( weapon )
-end*/
-
-hook.Add( "HUDWeaponPickedUp", "DonNotShowCards", function( weapon )
-	weps = LocalPlayer():GetWeapons()
-	if weapon:GetClass() == "br_keycard" then return false end
-end )
-
-function GM:CalcView( ply, origin, angles, fov )
-	local data = {}
-	data.origin = origin
-	data.angles = angles
-	data.fov = fov
-	data.drawviewer = false
-	local item = ply:GetActiveWeapon()
-	if IsValid( item ) then
-		if item.CalcView then
-			local vec, ang, ifov, dw = item:CalcView( ply, origin, angles, fov )
-			if vec then data.origin = vec end
-			if ang then data.angles = ang end
-			if ifov then data.fov = ifov end
-			if dw != nil then data.drawviewer = dw end
-		end
-	end
-
-	if CamEnable then
-		--print( "enabled" )
-		if !timer.Exists( "CamViewChange" ) then
-			timer.Create( "CamViewChange", 1, 1, function()
-				CamEnable = false
-			end )
-		end
-		data.drawviewer = true
-		dir = dir or Vector( 0, 0, 0 )
-		--print( dir )
-		data.origin = ply:GetPos() - dir - dir:GetNormalized() * 30 + Vector( 0, 0, 80 )
-		data.angles = Angle( 10, dir:Angle().y, 0 )
-	end
-
-	return data
-end
 
 function OBRStart()
 	if GetGlobalBool("NoCutScenes", false) then return end
