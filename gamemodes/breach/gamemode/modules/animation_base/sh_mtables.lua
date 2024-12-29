@@ -180,11 +180,8 @@ function ANIMATIONBASEFIX()
     BroadcastLua("GetMainSequenceTable() CreateTestHoldTypeTables()")
 end
 
-hook.Add("Initialize", "CreateAnimationsTable", function()
-    timer.Simple(1, function()
-        GetMainSequenceTable()
-        CreateTestHoldTypeTables()
-    end)
+timer.Simple(1, function()
+    ANIMATIONBASEFIX()
 end)
 
 function BREACH_GM:HandlePlayerJumping(player)

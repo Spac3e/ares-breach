@@ -301,35 +301,15 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 			LootBox:SetSubMaterial( index - 1, ply:GetSubMaterial( index - 1 ) )
 		end
 
-		if ( ply.HeadEnt and ply.HeadEnt:IsValid() ) then
+		if ( ply.HeadEnt and ply.HeadEnt:IsValid() and not ply.Head_Split) then
 			for index, mat in ipairs( ply.HeadEnt:GetMaterials() ) do
-			LootBox.HeadEnt:SetSubMaterial( index - 1, ply.HeadEnt:GetSubMaterial( index - 1 ) )
-			LootBox.HeadEnt:SetSkin( ply.HeadEnt:GetSkin() )
+				LootBox.HeadEnt:SetSubMaterial( index - 1, ply.HeadEnt:GetSubMaterial( index - 1 ) )
+				LootBox.HeadEnt:SetSkin( ply.HeadEnt:GetSkin() )
 			end
+
 		end
 	end
 
-	/*
-	if ply.BoneMergedEnts and not (ply.burnttodeath or ply.Death_ByAcid) then
-		local headent = ply.HeadEnt
-		local headvalid = headent and headent:IsValid()
-		
-		for _, v in ipairs(ply.BoneMergedEnts) do
-			if v and v:IsValid() and not v:GetInvisible() and (not ply.Head_Split or v:GetModel() == headent:GetModel()) then
-				Bonemerge(LootBox, v:GetModel(), v:GetSkin(), headent:GetSubMaterial(0))
-			end
-		end
-
-		if headvalid then
-			local mats = headent:GetMaterials()
-			for mat, _ in ipairs(mats) do
-				LootBox.HeadEnt:SetSubMaterial(mat - 1, headent:GetSubMaterial(mat - 1))
-			end
-			LootBox.HeadEnt:SetSkin(headent:GetSkin())
-		end
-	end
-	*/
-	
 	for _, weapon in ipairs(ply:GetWeapons()) do
 		if weapon.droppable != false and not weapon.UnDroppable and (ply:GTeam() ~= TEAM_SCP or ply.AffectedBy049) then
 			table.insert(LootBox.vtable.Weapons, weapon:GetClass())
@@ -406,8 +386,15 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 			NetEffect( ef_data )
 			LootBox.HeadEnt:SetSkin( ply:GetSkin() )
 			LootBox.HeadEnt:SetBodygroup( 0, math.random( 1, 3 ) )
-
 		end)
+
+		if ( LootBox.BoneMergedEnts and istable( LootBox.BoneMergedEnts ) ) then
+			for _, v in ipairs( LootBox.BoneMergedEnts ) do
+				if ( v and v:IsValid() and string.find(v:GetModel(), "helmet_cap")) then
+					v:Remove()
+				end
+			end
+		end
 
 		ply.Head_Split = nil
 	end
@@ -460,7 +447,7 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 		end
 	end
 
-	if ply:GTeam() != TEAM_SCP and not ply.Zombie then
+	if ply:GTeam() != TEAM_SCP and not ply.IsZombie then
 		local someshitbloodpolis = {
 			[8194] = true, -- physbul
 			[DMG_BULLET] = true,

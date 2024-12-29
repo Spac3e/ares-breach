@@ -23,6 +23,35 @@ local EMeta = FindMetaTable("Entity")
 local WMeta = FindMetaTable("Weapon")
 local vec = FindMetaTable("Vector")
 
+local string_len = utf8.len
+local string_sub = utf8.sub
+local string_find = string.find
+
+function utf8.StringToTable(str)
+    local tbl = {}
+    for i = 1, string_len(str) do
+        tbl[i] = string_sub(str, i, i)
+    end
+    return tbl
+end
+
+local utftotable = utf8.StringToTable
+function utf8.Explode(separator, str, withpattern)
+    if separator == "" then return utftotable(str) end
+    if withpattern == nil then withpattern = false end
+    local ret = {}
+    local current_pos = 1
+    for i = 1, string_len(str) do
+        local start_pos, end_pos = string_find(str, separator, current_pos, not withpattern)
+        if not start_pos then break end
+        ret[i] = string_sub(str, current_pos, start_pos - 1)
+        current_pos = end_pos + 1
+    end
+
+    ret[#ret + 1] = string_sub(str, current_pos)
+    return ret
+end
+
 function vec:Copy()
     return Vector(self.x, self.y, self.z)
 end

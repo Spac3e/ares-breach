@@ -773,6 +773,8 @@ end
 
 hook.Add("InitPostEntity", "StartBreachIntro", function()
     StartBreach(true)
+    ANIMATIONBASEFIX()
+
     if not file.Exists("breach_prefix_settings.txt", "DATA") then
         file.Write("breach_prefix_settings.txt", util.TableToJSON({
             enabled = false,

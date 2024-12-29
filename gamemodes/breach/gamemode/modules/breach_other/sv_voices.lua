@@ -12,7 +12,7 @@ local voices = {
 function PLAYER:GetVoiceTable()
     local model = self:GetModel():lower()
 
-    if model:find("mog") and not self.Zombie then
+    if model:find("mog") and not self.IsZombie then
         return voices.military
     end
 
@@ -29,7 +29,7 @@ function PLAYER:GetVoiceTable()
     end
 
     if self:GTeam() == TEAM_SCP then
-        return self.Zombie and voices.zombie or nil
+        return self.IsZombie and voices.zombie or nil
     end
 
     return voices.male
@@ -54,7 +54,7 @@ function PLAYER:Voice(id, lvl, ignore, cooldown)
         return
     end
 
-    if not self:Alive() then
+    if not self:Alive() and not id:find("die") then
         return
     end
 
@@ -67,6 +67,8 @@ function PLAYER:Voice(id, lvl, ignore, cooldown)
     if voice then
         self:EmitSound(voice, lvl or 65, self.voicePitch or 100, 1, CHAN_VOICE)
     end
+
+    print(id, voice)
 
     if id == "burn" then
         self.burnSound = voice
@@ -91,7 +93,7 @@ do
 
     -- Male
     addSounds(voices.male.hit, charpath .. "hurtsounds/male/hurt_", 39)
-    addSounds(voices.male.hit, charpath .. "hurtsounds/male/death_", 58, nil, ".mp3")
+    addSounds(voices.male.die, charpath .. "hurtsounds/male/death_", 58, nil, ".mp3")
     addSounds(voices.male.diefast, charpath .. "hurtsounds/male/death_fast_", 6, nil, ".mp3")
     addSounds(voices.male.neckshot, charpath .. "hurtsounds/male/neck_shot_", 18)
     addSounds(voices.male.burning, charpath .. "hurtsounds/fire/pl_burnpain0", 6)

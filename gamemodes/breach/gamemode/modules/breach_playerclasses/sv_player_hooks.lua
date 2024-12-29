@@ -324,56 +324,55 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 		ply.type = attacker:GetRoleName()
 	end
 	
-	local mozhet_razlet_boshkhi = {
-		["models/cultist/humans/security/security.mdl"] = true,
-		["models/cultist/humans/class_d/class_d.mdl"] = true,
-		["models/cultist/humans/class_d/class_d_female.mdl"] = true,
-		["models/cultist/humans/class_d/class_d_bor_new.mdl"] = true,
-		["models/cultist/humans/class_d/class_d_cleaner.mdl"] = true,
-		["models/cultist/humans/class_d/class_d_fat_new.mdl"] = true,
-		["models/cultist/humans/sci/scientist.mdl"] = true,
-		["models/cultist/humans/sci/scientist_female.mdl"] = true,
-		["models/cultist/humans/goc/goc.mdl"] = true,
-		["models/cultist/humans/chaos/chaos.mdl"] = true,
-		["models/cultist/humans/chaos/fat/chaos_fat.mdl"] = true,
-		["models/cultist/humans/mog/special_security.mdl"] = true,
-		["models/cultist/humans/mog/head_site.mdl"] = true,
-		["models/cultist/humans/mog/mog.mdl"] = true
-	}
+    local razleteblisha = {
+        ["models/cultist/humans/security/security.mdl"] = true,
+        ["models/cultist/humans/class_d/class_d.mdl"] = true,
+        ["models/cultist/humans/class_d/class_d_female.mdl"] = true,
+        ["models/cultist/humans/class_d/class_d_bor_new.mdl"] = true,
+        ["models/cultist/humans/class_d/class_d_cleaner.mdl"] = true,
+        ["models/cultist/humans/class_d/class_d_fat_new.mdl"] = true,
+        ["models/cultist/humans/sci/scientist.mdl"] = true,
+        ["models/cultist/humans/sci/scientist_female.mdl"] = true,
+        ["models/cultist/humans/goc/goc.mdl"] = true,
+        ["models/cultist/humans/chaos/chaos.mdl"] = true,
+        ["models/cultist/humans/chaos/fat/chaos_fat.mdl"] = true,
+        ["models/cultist/humans/mog/special_security.mdl"] = true,
+        ["models/cultist/humans/mog/head_site.mdl"] = true,
+        ["models/cultist/humans/mog/mog.mdl"] = true
+    }
 
-	local blocked_bonemerges = {
-		["models/cultist/humans/mog/head_gear/mog_helmet.mdl"] = true,
-		["models/cultist/humans/mog/head_gear/mog_helmet_2.mdl"] = true,
-		["models/cultist/humans/security/head_gear/helmet.mdl"] = true,
-		["models/cultist/humans/mog/head_gear/mog_helmet.mdl"] = true
-	}
-	
-	local model = ply:GetModel()
-	local role = ply:GetRoleName()
-	local dmg = dmginfo
-	local random = math.random(1,3) == 1
+    local restrictedeblisha = {
+        ["models/cultist/humans/mog/head_gear/mog_helmet.mdl"] = true,
+        ["models/cultist/humans/mog/head_gear/mog_helmet_2.mdl"] = true,
+        ["models/cultist/humans/security/head_gear/helmet.mdl"] = true
+    }
 
-	if ply:LastHitGroup() == HITGROUP_HEAD and mozhet_razlet_boshkhi[model] and dmg:IsBulletDamage() and IsValid(attacker) and attacker:IsPlayer() then
-		local weptab = attacker:GetActiveWeapon()
+    if ply:LastHitGroup() == HITGROUP_HEAD and razleteblisha[ply:GetModel()] and dmginfo:IsBulletDamage() and IsValid(attacker) and attacker:IsPlayer() then
+        local weapon = attacker:GetActiveWeapon()
 
-		if weptab.Primary.Ammo == "Shotgun" or weptab.Primary.Ammo == "Revolver" or weptab.Primary.Ammo == "SCP062Ammo" or weptab.Primary.Ammo == "Sniper" then
-			for k,v in pairs(ply:LookupBonemerges()) do
-				if blocked_bonemerges[v:GetModel()] then
-					return
-				end
-			end
-		end
+        if IsValid(weapon) and weapon.Primary and (weapon.Primary.Ammo == "Shotgun" or weapon.Primary.Ammo == "Revolver" or weapon.Primary.Ammo == "SCP062Ammo" or weapon.Primary.Ammo == "Sniper") then
+            for _, v in pairs(ply:LookupBonemerges()) do
+                if restrictedeblisha[v:GetModel()] then
+                    return
+                end
+            end
 
-		if model == "models/cultist/humans/chaos/chaos.mdl" and ply:GTeam() == TEAM_CHAOS or
-		model == "models/cultist/humans/mog/mog.mdl" and role != "MTF Engineer" or
-		model == "models/cultist/humans/security/security.mdl" and role != "Security Rookie" or
-		model == "models/cultist/humans/goc/goc.mdl" and role != "GOC Spy" then return end
+            local model = ply:GetModel()
+            local role = ply:GetRoleName()
 
-		if ply.HeadEnt then
-			ply.HeadEnt:SetModel("models/cultist/heads/gibs/gib_head.mdl")
-			ply.Head_Split = true
-		end
-	end
+            if (model == "models/cultist/humans/chaos/chaos.mdl" and ply:GTeam() == TEAM_CHAOS) or
+               (model == "models/cultist/humans/mog/mog.mdl" and role != "MTF Engineer") or
+               (model == "models/cultist/humans/security/security.mdl" and role != "Security Rookie") or
+               (model == "models/cultist/humans/goc/goc.mdl" and role != "GOC Spy") then
+                return
+            end
+
+            if ply.HeadEnt then
+                ply.HeadEnt:SetModel("models/cultist/heads/gibs/gib_head.mdl")
+                ply.Head_Split = true
+            end
+        end
+    end
 end
 
 local scpdeadsounds = {
@@ -454,6 +453,10 @@ function GM:PlayerDeath(victim, inflictor, attacker )
 
 	CreateLootBox(victim)
 
+	if (victim:GTeam() != TEAM_SCP or victim.IsZombie) then
+		victim:Voice("die", nil, true)
+	end
+
 	victim:StripAmmo()
 	victim:SetUsingBag("")
 	victim:SetUsingCloth("")
@@ -470,8 +473,8 @@ function GM:PlayerDeath(victim, inflictor, attacker )
 	local corpse = victim:GetNWEntity("RagdollEntityNO")
 
 	net.Start("Death_Scene")
-	net.WriteBool(true)
-	net.WriteEntity(corpse)
+		net.WriteBool(true)
+		net.WriteEntity(corpse)
 	net.Send(victim)
 
 	victim:LevelBar()

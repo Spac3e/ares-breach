@@ -1785,32 +1785,67 @@ function SWEP:isFreeAimOn()
 end
 
 function SWEP:MakeRecoil(mod)
-	local mod = self:GetRecoilModifier(mod)
-	local IFTP = IsFirstTimePredicted()
-	
-	if (SP and SERVER) or (not SP and CLIENT and IFTP) then
-		ang = self.Owner:EyeAngles()
-		ang.p = ang.p - self.Recoil * 0.5 * mod
-		ang.y = ang.y + math.Rand(-1, 1) * self.Recoil * 0.5 * mod
-	
-		self.Owner:SetEyeAngles(ang)
-	end
+    local mod = self:GetRecoilModifier(mod)
+    local IFTP = IsFirstTimePredicted()
+	local owner = self:GetOwner()
 
-	local freeAimOn = self:isFreeAimOn()
-	
-	if not freeAimOn or (freeAimOn and self.dt.BipodDeployed) then
-		self.Owner:ViewPunch(Angle(-self.Recoil * 1.25 * mod, 0, 0))
-	end
-	
-	if CLIENT and IFTP then
-		if self.AimBreathingEnabled then
-			if self.holdingBreath then
-				self:reduceBreathAmount(mod)
-			else
-				self:reduceBreathAmount(0)
-			end
-		end
-	end
+    local recoilV = (self.Recoil or 1) * mod
+    local recoilH = 0.43 * mod
+    local recoilShake = 0.35
+    local recoilStrength = (recoilV + recoilH) * 1.2
+    local recoilSpeed = 3.0
+    local recoilDecay = 2.5
+    local returnSpeed = 1.0
+
+    if SERVER or (CLIENT and IFTP) then
+        local ang = owner:EyeAngles()
+
+        local verticalRecoil = recoilV * math.Rand(0.7, 1.0)
+        local horizontalRecoil = math.Rand(-1, 1) * recoilH * math.Rand(0.6, 0.9)
+
+        ang.p = ang.p - verticalRecoil
+        ang.y = ang.y + horizontalRecoil
+
+        ang.p = ang.p + math.Rand(-recoilShake, recoilShake)
+        ang.y = ang.y + math.Rand(-recoilShake, recoilShake)
+
+        owner:SetEyeAngles(ang)
+    end
+
+    if not self:isFreeAimOn() or self.dt.BipodDeployed then
+        local punchAngle = Angle(-recoilV * math.Rand(1.0, 1.3), recoilH * math.Rand(-0.5, 0.5), 0)
+        owner:ViewPunch(punchAngle)
+    end
+
+    if CLIENT and IFTP then
+        local curTime = CurTime()
+
+        local shakeX = math.sin(curTime * recoilSpeed) * recoilStrength
+        local shakeY = math.cos(curTime * recoilSpeed) * recoilStrength
+        local shake = Angle(shakeX, shakeY, 0)
+
+        owner:SetEyeAngles(owner:EyeAngles() + shake * FrameTime())
+        recoilStrength = math.Approach(recoilStrength, 0, FrameTime() * recoilDecay)
+    end
+
+    if CLIENT and IFTP then
+        timer.Simple(0.05, function()
+            if IsValid(owner) then
+                local ang = owner:EyeAngles()
+                ang.p = math.Approach(ang.p, ang.p + recoilV * 0.5, FrameTime() * returnSpeed)
+                ang.y = math.Approach(ang.y, ang.y - recoilH * 0.3, FrameTime() * returnSpeed)
+                owner:SetEyeAngles(ang)
+            end
+        end)
+    end
+
+    if CLIENT and IFTP and self.AimBreathingEnabled then
+        if self.holdingBreath then
+            self:reduceBreathAmount(mod * 2.0)
+        else
+            self:reduceBreathAmount(mod * 0.8)
+        end
+    end
 end
 
 function SWEP:SecondaryAttack()

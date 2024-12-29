@@ -250,6 +250,7 @@ function GM:GetFallDamage(ply, speed)
 		ground:TakeDamage(ply:GetRoleName() == "Class-D Fat" and dmg * 10 or dmg * 1.65, ply, ply)
 	end
 
+	ply:Voice("hit")
     ply:EmitSound("nextoren/charactersounds/hurtsounds/fall/pldm_fallpain0" .. math.random(1, 2) .. ".wav")
 
     return dmg
@@ -259,25 +260,8 @@ function GM:PlayerDeathSound(ply)
     return true
 end
 
-function GM:PlayerHurt(victim, attacker, health, damage)
-	if victim:GTeam() == TEAM_SCP and !victim.Zombie then
-		return
-	end
-
-	if victim:WouldDieFrom(damage) then
-		return victim:Voice("die")
-	end
-
-    if !((victim.NextPain or 0) < CurTime() and health > 0) then return end
-
-	victim:Voice("hit")
-
-	if attacker and attacker:IsPlayer() and attacker:GTeam() == TEAM_GRU and victim:Alive() and attacker:GetActiveWeapon().CW20Weapon and ((attacker.NextSpot or 0) < CurTime() and health > 0) then
-		attacker:EmitSound("nextoren/vo/gru/spot" .. math.random(1, 7) .. ".wav")
-		attacker.NextSpot = CurTime() + math.Rand(8.92,12.85)
-	end
-
-    victim.NextPain = CurTime() + math.Rand(1.55, 4.22)
+function GM:PlayerHurt()
+	-- дорогие друзья, эксперемент ХУЙНЯ
 end
 
 function GM:OnEntityCreated( ent )

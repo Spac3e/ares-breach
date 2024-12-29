@@ -540,6 +540,7 @@ function mply:SetupNormal()
 	self:SetSkin(0)
 	self.weaponfromclient = nil
 	self.IsZombie = false
+	self.recoilmultiplier = nil
 	self:StripWeapons()
 	self:StripAmmo()
 	self:SetNW2Bool("Breach:CanAttach", false)
@@ -1062,6 +1063,10 @@ function mply:ApplyRoleStats(role)
 
 	if self:GetRoleName() == "UIU Spy" and timer.Exists("RoundTime") then
 		UIUSpy_MakeDocuments(3)
+	end
+
+	if role.recoilmultiplier then
+		self.recoilmultiplier = role.recoilmult
 	end
 
 	self.voicePitch = math.random(90, 110)

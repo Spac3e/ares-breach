@@ -29,54 +29,6 @@ local util = util
 local net = net
 local player = player
 	
-local heliModel = Model( "models/comradealex/mgs5/hp-48/hp-48test.mdl" )
-local light_origin = Vector( 14883.383789, 13000.545898, -15814.162109 )
-local helicopter_angle = Angle( 0, -90, 0 )
-
-function ClientSpawnHelicopter()
-    local entcall = LocalPlayer()
-    entcall.StopInventory = true
-
-    local dlight = DynamicLight(entcall:EntIndex())
-    if dlight then
-        dlight.pos = light_origin
-        dlight.r = 190
-        dlight.g = 0
-        dlight.b = 0
-        dlight.brightness = 3
-        dlight.Size = 900
-        dlight.DieTime = CurTime() + 60
-    end
-
-    local helicopter = ents.CreateClientside("base_gmodentity")
-    helicopter:SetModel(heliModel)
-    helicopter:SetPos(light_origin)
-    helicopter:SetAngles(helicopter_angle)
-
-    timer.Simple(10, function()
-        local snd = CreateSound(helicopter, "nextoren/others/helicopter/apache_hover.wav")
-        snd:SetDSP(17)
-        snd:Play()
-		
-        timer.Simple(29, function()
-            if entcall and entcall:IsValid() and entcall:IsPlayer() then
-                entcall.StopInventory = false
-                timer.Simple(23, function()
-                    if entcall and entcall:IsValid() and entcall:IsPlayer() then
-                        StopMusic(9)
-                        timer.Simple(6, function() BREACH.Music:PickGenericSong() end)
-						helicopter:StopSound("nextoren/others/helicopter/apache_hover.wav")
-                        helicopter:Remove()
-                    end
-                end)
-            end
-        end)
-    end)
-
-    util.ScreenShake(light_origin, 5, 1, 40, 1024)
-    HelicopterStart()
-end
-
 hook.Add("PlayerStartVoice", "Breach:IntercomVoiceScale", function(ply)
 	if ply:GetNWBool("IntercomTalking", false) then
 		ply:SetVoiceVolumeScale(GetConVar("breach_config_announcer_volume"):GetInt() / 100 or 1)
@@ -518,25 +470,38 @@ net.Receive("BreachMuzzleflash", function()
 	util.Effect("cw_kk_ins2_muzzleflash", effectdata) --good
 end)
 
---[[
-local chat_hide = {
-	["joinleave"] = true,
-	["namechange"] = true, --xyecocs
-	["servermsg"] = true
-}
-
-function GM:ChatText( index, name, text, type )
-		return chat_hide[ type ]
-end
---]]
-
 net.Receive("BreachFlinch", function()
+	local ply = net.ReadEntity()
+	local hitgroup = net.ReadFloat()
 
-	local ply = LocalPlayer()
+	if (ply.shot_EffectTime or 0) <= CurTime() then
+		local flinch = {
+			[HITGROUP_HEAD] = { "flinch_head_01", "flinch_head_02" },
+			[HITGROUP_CHEST] = { "flinch_phys_01", "flinch_phys_02" },
+			[HITGROUP_STOMACH] = { "flinch_stomach_01", "flinch_stomach_02" },
+			[HITGROUP_LEFTARM] = "flinch_shoulder_l",
+			[HITGROUP_RIGHTARM] = "flinch_shoulder_r",
+			[HITGROUP_LEFTLEG] = "flinch_01",
+			[HITGROUP_RIGHTLEG] = "flinch_02"
+		}
+
+		local flinchanim = flinch[hitgroup]
+
+		if flinchanim then
+			local seqname = istable(flinchanim) and table.Random(flinchanim) or flinchanim
+			local seqid = ply:LookupSequence(seqname)
+
+			if seqid and seqid > 0 then
+				ply:AnimResetGestureSlot(GESTURE_SLOT_FLINCH)
+				ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_FLINCH, seqid, 0, true)
+				ply:AnimSetGestureWeight(GESTURE_SLOT_FLINCH, 1)
+				ply:SetLayerDuration(GESTURE_SLOT_FLINCH, 1)
+			end
+		end
+	end
 
 	ply.shotdown = true
 	ply.shot_EffectTime = CurTime() + 0.4
-
 end)
 
 function FPCutScene()
@@ -900,239 +865,6 @@ function HedwigAbility()
       render.SetStencilEnable( false )
     end)
 end
-
-function StartSceneClientSide( ply )
-
-	local character = ents.CreateClientside( "base_gmodentity" )
-	character:SetPos( Vector( -1981.652466, 5217.017090, 1459.548218 ) )
-	character:SetAngles( Angle( 0, -90, 0 ) )
-	character:SetModel( "models/cultist/humans/class_d/class_d.mdl" )
-	character:Spawn()
-	character:SetSequence( "photo_react_blind" )
-	character:SetCycle( 0 )
-	character:SetPlaybackRate( 1 )
-	character.AutomaticFrameAdvance = true
-	local cycle = 0
-	character.Think = function( self )
-
-		self:NextThink( CurTime() )
-		self:SetCycle( math.Approach( cycle, 1, FrameTime() * 0.2 ) )
-		cycle = self:GetCycle()
-		return true
-
-	end
-
-	ply.InCutscene = true
-
-	ply:SetNWEntity("NTF1Entity", character)
-
-	local CI = ents.CreateClientside("base_gmodentity")
-	CI:SetPos(Vector(-1983.983765, 4951.116211, 1459.224365))
-	CI:SetAngles(Angle(0, 90, 0))
-	CI:SetModel("models/cultist/humans/chaos/chaos.mdl")
-	CI:SetMoveType(MOVETYPE_NONE)
-    CI:SetBodygroup( 0, 0 )
-    CI:SetBodygroup( 1, 1 )
-	CI:Spawn()
-	CI:SetColor( color_black )
-	CI:SetSequence("LineIdle02")
-	CI:SetPlaybackRate(1)
-	CI.OnRemove = function( self )
-
-		if ( self.BoneMergedEnts ) then
-
-			for _, v in ipairs( self.BoneMergedEnts ) do
-
-				if ( v && v:IsValid() ) then
-
-					v:Remove()
-
-				end
-
-			end
-
-		end
-
-	end
-
-	ClientBoneMerge( CI, "models/cultist/humans/chaos/head_gear/beret.mdl" )
-	ClientBoneMerge( CI, "models/cultist/humans/balaclavas_new/balaclava_full.mdl" )
-
-	local handsid = CI:LookupAttachment('anim_attachment_RH')
-	local hands = CI:GetAttachment( handsid )
-
-	timer.Simple( 0.1, function()
-
-		util.ScreenShake( vector_origin, 200, 100, 10, 355);
-
-		LocalPlayer():ScreenFade(SCREENFADE.IN, color_white, 1, 1.2)
-
-		LocalPlayer():EmitSound( "nextoren/others/bell.ogg" )
-
-		--LocalPlayer():EmitSound( "nextoren/others/ending.ogg" )
-	
-	end )
-
-	timer.Simple( 1, function()
-
-	LocalPlayer():EmitSound( "nextoren/others/ending.ogg" )
-	
-	end )
-
-	timer.Simple( 5, function()
-
-		CI:EmitSound( "nextoren/vo/chaos/class_d_alternate_ending.ogg" )
-
-	end )
-
-	timer.Simple( 9, function()
-		LocalPlayer():ScreenFade(SCREENFADE.IN, color_white, 1, 1.2)
-		LocalPlayer():EmitSound( "nextoren/others/bell.ogg" )
-	end )
-
-
-	CI.AutomaticFrameAdvance = true
-
-
-	CI.Think = function( self )
-
-		self.NextThink = ( CurTime() )
-		if ( self:GetCycle() >= 0.01 ) then self:SetCycle( 0.01 ) end
-
-	end
-
-	local cycle3 = 0
-	local CI2 = ents.CreateClientside("base_gmodentity")
-	CI2:SetPos(Vector(-1960.850830, 4894.328613, 1459.702515))
-	CI2:SetAngles(Angle(0, 94, 0))
-	CI2:SetModel("models/cultist/humans/chaos/chaos.mdl")
-	CI2:SetMoveType(MOVETYPE_NONE)
-	CI2:Spawn()
-	CI2:SetColor( color_black )
-	CI2:SetBodygroup( 0, 1 )
-    CI2:SetBodygroup( 1, 0 )
-    CI2:SetBodygroup( 2, 1 )
-    CI2:SetBodygroup( 4, 0 )
-	CI2:SetBodygroup( 5, 0 )
-	CI2:SetSequence( "AHL_menuidle_SHOTGUN" )
-	CI2:SetPlaybackRate( 1 )
-	ClientBoneMerge( CI2, "models/cultist/humans/balaclavas_new/balaclava_full.mdl" )
-	ClientBoneMerge( CI2, "models/cultist/humans/chaos/head_gear/helmet.mdl" )
-	local handsid2 = CI2:LookupAttachment('anim_attachment_RH')
-	local hands2 = CI2:GetAttachment( handsid )
-	CI2.AutomaticFrameAdvance = true
-	CI2.OnRemove = function( self )
-
-		if ( self.BoneMergedEnts ) then
-
-			for _, v in ipairs( self.BoneMergedEnts ) do
-
-				if ( v && v:IsValid() ) then
-
-					v:Remove()
-
-				end
-
-			end
-
-		end
-
-	end
-
-
-	local Weapon2 = ents.CreateClientside("base_gmodentity")
-	Weapon2:SetModel("models/weapons/w_cw_kk_ins2_rpk_tac.mdl")
-	Weapon2:SetPos(hands2.Pos)
-	Weapon2:SetAngles(Angle(0,90,0))
-	Weapon2:SetMoveType(MOVETYPE_NONE)
-	Weapon2:Spawn()
-
-    CI2.Think = function(self)
-		if !CI2:IsValid() then return end
-		self:NextThink( CurTime() )
-
-		local handsid7 = CI2:LookupAttachment('anim_attachment_RH')
-		local hands7 = CI2:GetAttachment( handsid )
-        Weapon2:SetPos(hands7.Pos + Vector( 0, 8, 0 ) )
-		self:SetCycle( math.Approach( cycle3, 1, FrameTime() * 0.15 ) )
-		cycle3 = self:GetCycle()
-
-
-		--CI2:SetPos(Vector(currentpos.x - 0.5, currentpos.y + 8, currentpos.z))
-
-
-
-	end
-	local cycle2 = 0
-	local CI3 = ents.CreateClientside("base_gmodentity")
-	CI3:SetPos(Vector(-2012.675903, 4894.200195, 1459.009277))
-	CI3:SetAngles(Angle(0, 70, 0))
-	CI3:SetModel("models/cultist/humans/chaos/chaos.mdl")
-	CI3:SetMoveType(MOVETYPE_NONE)
-	CI3:Spawn()
-	CI3:SetBodygroup( 0, 1 )
-    CI3:SetBodygroup( 1, 0 )
-    CI3:SetBodygroup( 2, 1 )
-    CI3:SetBodygroup( 4, 0 )
-	CI3:SetBodygroup( 5, 0 )
-	CI3:SetColor( color_black )
-	CI3:SetSequence("MPF_adooridle")
-	CI3:SetPlaybackRate(1)
-	local handsid3 = CI3:LookupAttachment('anim_attachment_RH')
-	local hands3 = CI3:GetAttachment( handsid )
-	ClientBoneMerge( CI3, "models/cultist/humans/balaclavas_new/balaclava_full.mdl" )
-	ClientBoneMerge( CI3, "models/cultist/humans/chaos/head_gear/helmet.mdl" )
-
-	CI3.AutomaticFrameAdvance = true
-	CI3.OnRemove = function( self )
-
-		if ( self.BoneMergedEnts && istable( self.BoneMergedEnts ) ) then
-
-			for _, v in ipairs( self.BoneMergedEnts ) do
-
-				if ( v && v:IsValid() ) then
-
-					v:Remove()
-
-				end
-
-			end
-
-		end
-
-	end
-
-	CI3.Think = function(self)
-
-		self:NextThink( CurTime() )
-		self:SetCycle( math.Approach( cycle2, 1, FrameTime() * 0.2 ) )
-		cycle2 = self:GetCycle()
-
-
-	end
-	local Weapon3 = ents.CreateClientside("base_gmodentity")
-	Weapon3:SetModel("models/weapons/w_cw_kk_ins2_rpk_tac.mdl")
-	Weapon3:SetPos(hands3.Pos)
-	Weapon3:SetAngles(Angle(0,80,0))
-	Weapon3:SetMoveType(MOVETYPE_NONE)
-	Weapon3:Spawn()
-
-
-    timer.Simple( 11, function()
-
-        Weapon2:Remove()
-        Weapon3:Remove()
-        CI:Remove()
-        CI2:Remove()
-        CI3:Remove()
-		ply.InCutscene = false
-		character:Remove()
-		ply:SetNWEntity("NTF1Entity", NULL)
-
-    end )
-
-end
-concommand.Add("CI_Anim_Escsp", StartSceneClientSide)
 
 local EntMats = {}
 net.Receive( "NightvisionOn", function()

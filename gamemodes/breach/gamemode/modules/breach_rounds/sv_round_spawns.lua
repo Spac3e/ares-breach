@@ -22,48 +22,6 @@ local function RandomItem(list)
     return nil
 end
 
-local function ApplyTable(item, tab)
-    for k, v in pairs(tab) do
-        if k ~= "_dnc" then
-            if istable(v) then
-                item[k] = item[k] or {}
-                ApplyTable(item[k], v)
-            else
-                item[k] = v
-            end
-        end
-    end
-end
-
-function SpawnItemGeneric(class, pos, num, post_tab, post_func)
-    if isfunction(post_tab) then
-        post_func = post_tab
-        post_tab = nil
-    end
-
-    if istable(pos) then
-        if not post_tab or not post_tab._dnc then pos = table.Copy(pos) end
-    else
-        pos = {pos}
-    end
-
-    local seq = false
-    if num < 0 then
-        num = #pos
-        seq = true
-    end
-
-    for i = 1, num do
-        local item = ents.Create(istable(class) and class[math.random(#class)] or class)
-        if IsValid(item) then
-            item:SetPos(seq and pos[i] or table.remove(pos, math.random(#pos)))
-            if post_tab then ApplyTable(item, post_tab) end
-            item:Spawn()
-            if post_func then post_func(item, i) end
-        end
-    end
-end
-
 local function SpawnSingle(class, pos, ang)
     local ent = ents.Create(class)
     if IsValid(ent) then

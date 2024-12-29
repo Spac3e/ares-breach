@@ -2,7 +2,7 @@ function Bonemerge(mdl, ent, skin, submaterial, bodygroups, shadow, nodraw)
     if not IsValid(ent) then
         return
     end
-   
+
     if not ent.BoneMergedEnts then
         ent.BoneMergedEnts = {}
     end
@@ -27,14 +27,14 @@ function Bonemerge(mdl, ent, skin, submaterial, bodygroups, shadow, nodraw)
         bonemerge:SetBodygroup(k, v)
     end
 
-    if not mdl:find("head_gear") and (mdl:find("head") or mdl:find("balaclava")) and not mdl:find("hair") then
+    if not mdl:find("head_gear") and (mdl:find("head") or mdl:find("balaclava")) and not (mdl:find("hair")) then
         if submaterial then
             local index = 0
 
             if strfind(bonemerge:GetMaterials()[1], "eye") then
                 index = 1
             end
-    
+
             bonemerge:SetSubMaterial(index, submaterial)
         end
 

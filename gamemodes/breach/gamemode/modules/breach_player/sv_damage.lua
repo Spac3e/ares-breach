@@ -7,10 +7,6 @@ local stomach_hit = {
     --[HITGROUP_RIGHTARM] = true
 }
 
-HITGROUP_DICK = 11
-HITGROUP_SPINE = 12
-HITGROUP_HEART = 13
-
 AR2_AMMO = "AR2"
 AR2_AMMO_2 = "7.62x39MM"
 SMG1_AMMO = "SMG1"
@@ -31,7 +27,7 @@ REVOLVER_AMMO_5 = ".38 Special"
 GRU_AMMO = "GRU"
 
 function GM:ScalePlayerDamage(ply, hitgroup, dmginfo)
-    if not IsValid(ply) or not ply:Alive() then
+    if not IsValid(ply) and ply:Alive() then
         return
     end
 
@@ -44,6 +40,16 @@ function GM:ScalePlayerDamage(ply, hitgroup, dmginfo)
     local plypos = ply:GetPos()
     local distsqr = attackerpos:DistToSqr(plypos)
     local damagedrop = 0
+
+	if (ply.lasthurt or 0) <= CurTime() and not ply:WouldDieFrom(dmg) then
+		ply:Voice("hit")
+		if attacker and attacker:IsPlayer() and attacker:GTeam() == TEAM_GRU and ply:Alive() and attacker:GetActiveWeapon() and attacker:GetActiveWeapon().CW20Weapon and (attacker.NextSpot or 0) < CurTime() then
+			attacker:EmitSound("nextoren/vo/gru/spot" .. math.random(1, 7) .. ".wav")
+			attacker.NextSpot = CurTime() + math.Rand(8.92, 12.85)
+		end
+
+		ply.lasthurt = CurTime() + math.Rand(1.55, 4.22)
+	end
 
 	if IsValid(attacker) and attacker:IsPlayer() then
 		local wep = attacker:GetActiveWeapon()
@@ -176,39 +182,16 @@ function GM:ScalePlayerDamage(ply, hitgroup, dmginfo)
 			dmginfo:SetDamage(dmg * 1.25)
 		end
     
+
         --[[if ply:GTeam() == TEAM_SCP and dmginfo:IsDamageType(DMG_BLAST) then
             dmginfo:SetDamage(450)
         end--]]
     end
 
+	net.Start("BreachFlinch")
+		net.WriteEntity(ply)
+		net.WriteFloat(hitgroup)
+	net.Broadcast(ply)
+
 	return dmginfo
 end
-
-
-hook.Add("ScalePlayerDamage", "Breach-Damage.Flinch", function(ply, grp)
-    if ply:IsPlayer() then
-        local group = nil
-        local hitpos = {
-            [HITGROUP_HEAD] = { "flinch_head_01", "flinch_head_02" },
-            [HITGROUP_CHEST] = { "flinch_phys_01", "flinch_phys_02" },
-            [HITGROUP_STOMACH] = { "flinch_stomach_01", "flinch_stomach_02" },
-            [HITGROUP_LEFTARM] = "flinch_shoulder_l",
-            [HITGROUP_RIGHTARM] = "flinch_shoulder_r",
-            [HITGROUP_LEFTLEG] = ply:GetSequenceActivity(ply:LookupSequence("flinch_01")),
-            [HITGROUP_RIGHTLEG] = ply:GetSequenceActivity(ply:LookupSequence("flinch_02"))
-        }
-
-		if not hitpos[grp] then return end
-
-		local group = nil
-		if istable(hitpos[grp]) then
-			group = ply:LookupSequence(table.Random(hitpos[grp]))
-		else
-			group = ply:LookupSequence(hitpos[grp])
-		end
-	
-		net.Start("BreachFlinch")
-		net.WriteEntity(ply)
-		net.Send(ply)
-    end
-end)
