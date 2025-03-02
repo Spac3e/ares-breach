@@ -110,6 +110,13 @@ sound.Add({
 })
 
 sound.Add({
+    name = "character.inventory_interaction",
+    volume = .1,
+    channel = CHAN_STATIC,
+    sound = "nextoren/charactersounds/inventory/nextoren_inventory_select.ogg"
+})
+
+sound.Add({
     name = "misc.access_granted",
     channel = CHAN_STATIC,
     volume = .85,

@@ -713,33 +713,35 @@ do
 
     function mply:Give(className, bNoAmmo)
         local weapon
-
         local tr = self:GetEyeTrace()
-        local wepent = tr.Entity
-        local is_cw = wepent.CW20Weapon
+        local wepent = IsValid(tr.Entity) and tr.Entity or nil
+
+        local is_cw = wepent and wepent.CW20Weapon
 
         self.BrWeaponGive = true
         weapon = self:BrGive(className, bNoAmmo)
         self.BrWeaponGive = nil
 
-        local savedammo = wepent.SavedAmmo
+        if !IsValid(weapon) then
+            return nil
+        end
 
-        if wepent and is_cw then
-            if savedammo and savedammo != 0 then
+        if is_cw then
+            local savedammo = wepent.SavedAmmo or 0
+            if savedammo > 0 then
                 weapon:SetClip1(savedammo)
             end
 
-			self:SendLua("LocalPlayer().DoNotPlayInteract = true")
+            self:SendLua("LocalPlayer().DoNotPlayInteract = true")
 
             local loadOrder = {}
 
-            for k, attCategory in pairs(wepent.Attachments) do
+            for k, attCategory in pairs(wepent.Attachments or {}) do
                 local v = attCategory.last
                 local att = CustomizableWeaponry.registeredAttachmentsSKey[attCategory.atts[v]]
-                
+
                 if att then
                     local pos = 1
-
                     if att.dependencies or attCategory.dependencies or (wepent.AttachmentDependencies and wepent.AttachmentDependencies[att.name]) then
                         pos = #loadOrder + 1
                     end
@@ -748,41 +750,32 @@ do
                 end
             end
 
-			weapon:detachAll()
+            weapon:detachAll()
 
-            for k, v in pairs(loadOrder) do
-                weapon:attach(v.category, v.position - 1)
-            end
-
-			self:SendLua("LocalPlayer().DoNotPlayInteract = nil")
-        end
-
-        if wepent and wepent:GetClass() == "weapon_special_gaus" then
-            if wepent.CanCharge != true then
-                weapon.CanCharge = false
-                weapon.Shooting = false
-            end
-        end
-
-		if wepent and wepent:GetClass():find("item_medkit_") then
-			if wepent.Heal_Left then
-				weapon.Heal_Left = wepent.Heal_Left
-			end
-		end
-
-		if wepent and wepent:GetClass() == "item_drink_294" then
-			if wepent.effect then
-				weapon.effect = wepent.effect
-			end
-			if wepent.sip then
-				weapon.sip = wepent.sip
-			end
-
-			print(weapon.sip, wepent.sip)
+			timer.Simple(0.1, function()
+                if IsValid(weapon) then
+                    for _, v in ipairs(loadOrder) do
+                        weapon:attach(v.category, v.position - 1)
+                    end
+                    self:SendLua("LocalPlayer().DoNotPlayInteract = nil")
+                end
+			end)
 		end
 
         if wepent then
-            if wepent.Copied == true then
+            local wepClass = wepent:GetClass()
+
+            if wepClass == "weapon_special_gaus" then
+                weapon.CanCharge = wepent.CanCharge or false
+                weapon.Shooting = false
+            elseif wepClass:find("item_medkit_") then
+                weapon.Heal_Left = wepent.Heal_Left or weapon.Heal_Left
+            elseif wepClass == "item_drink_294" then
+                weapon.effect = wepent.effect or weapon.effect
+                weapon.sip = wepent.sip or weapon.sip
+            end
+
+            if wepent.Copied then
                 weapon.Copied = true
             end
         end
@@ -793,7 +786,9 @@ do
     function mply:BreachGive(classname)
         self:Give(classname)
         timer.Simple(0.1, function()
-            self:SelectWeapon(classname)
+            if IsValid(self) then
+                self:SelectWeapon(classname)
+            end
         end)
     end
 end
@@ -808,34 +803,29 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 	local tr = ply:GetEyeTrace()
     local wepent = tr.Entity
 
-    if ply:GTeam() != TEAM_SPEC then
-        if wep.teams then
-            local canuse = true
-            for k, v in pairs(wep.teams) do
-                if v == ply:GTeam() then
-                    canuse = true
-                    break 
-                end
-            end
-
-            if not canuse then
-                return true
+    if wep.teams then
+        local canuse = false
+        for _, v in pairs(wep.teams) do
+            if v == ply:GTeam() then
+                canuse = true
+                break
             end
         end
+        if not canuse then return false end
     end
 
     if trace.Entity == wep and ply:KeyDown(IN_USE) then
 		if (ply:GTeam() == TEAM_SCP || ply:GTeam() == TEAM_SPEC || ply:Health() <= 0) then
 			return false
 		end
-	
+
 		if (ply.NextPickup || 0) > CurTime() then
 			return false
 		end
-	
-		if (ply.ForceToGive and weap:GetClass() == ply.ForceToGive) then
-			ply.HasWeaponCheck = {class = ply.ForceToGive, ent = weap}
-	
+
+		if (ply.ForceToGive and wep:GetClass() == ply.ForceToGive) then
+			ply.HasWeaponCheck = {class = ply.ForceToGive, ent = wep}
+
 			timer.Simple(.1, function()
 				if (ply.HasWeaponCheck and ply.HasWeaponCheck.class and !ply:HasWeapon(ply.HasWeaponCheck.class)) then
 					if (ply.HasWeaponCheck.ent and ply.HasWeaponCheck.ent:IsValid()) then
@@ -856,7 +846,7 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 				BREACH.Players:ChatPrint(ply, true, true, "У Вас уже есть данный предмет.")
 				return false
 			end
-	
+
 			local maximumdefaultslots = ply:GetMaxSlots()
 			local maximumitemsslots = 6
 			local maximumnotdroppableslots = 6
@@ -864,14 +854,14 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 			local countitem = 0
 			local countnotdropable = 0
 			local is_cw = wepent.CW20Weapon
-	
+
 			for _, weapon in ipairs(ply:GetWeapons()) do
 				if (is_cw and weapon.CW20Weapon and weapon.Primary.Ammo == wepent.Primary.Ammo) then
 					ply.NextPickup = CurTime() + 1
 					BREACH.Players:ChatPrint(ply, true, true, "У Вас уже есть данный тип оружия.")
 					return
 				end
-				
+
 				if (!weapon.Equipableitem and !weapon.UnDroppable) then
 					countdefault = countdefault + 1
 				elseif (weapon.Equipableitem) then
@@ -880,7 +870,7 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 					countnotdropable = countnotdropable + 1
 				end
 			end
-	
+
 			if (!wepent.Equipableitem and !wepent.UnDroppable and countdefault >= maximumdefaultslots) then
 				ply.NextPickup = CurTime() + 1
 				BREACH.Players:ChatPrint(ply, true, true, "Ваш основной инвентарь заполнен.")
@@ -894,12 +884,12 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 				BREACH.Players:ChatPrint(ply, true, true, "Ваш основной инвентарь заполнен.")
 				return false
 			end
-	
+
 			local physobj = wepent:GetPhysicsObject()
 			if (physobj and physobj:IsValid()) then
 				physobj:EnableMotion(false)
 			end
-	
+
 			ply:BrProgressBar("l:progress_wait", 0.5, "nextoren/gui/icons/hand.png", trace.Entity, true, function()
 				if (wepent:IsWeapon()) then
 					ply:EmitSound("nextoren/charactersounds/inventory/nextoren_inventory_itemreceived.wav", 75, math.random(98, 105), 1, CHAN_STATIC)
@@ -1163,7 +1153,7 @@ function GM:PlayerUse(ply, ent)
         end
     end
 end
-	
+
 function GM:CanPlayerSuicide( ply )
-	return false
+	return ply:IsPremium()
 end

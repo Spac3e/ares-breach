@@ -1,44 +1,21 @@
 local PMETA = FindMetaTable("Player")
 
 do
-    local function checkobstacle()
-        local tracedata = {
-            mask = MASK_SOLID,
-            mins = Vector(-6, -6, -6),
-            maxs = Vector(6, 6, 6)
-        }
+    PMETA.old_getshootpos = PMETA.old_getshootpos or PMETA.GetShootPos
+    PMETA.old_eyepos = PMETA.old_eyepos or PMETA.EyePos
 
-        local tracehull = util.TraceHull
-        tracedata.start = start
-        tracedata.endpos = pos
-        tracedata.filter = ply
-        return tracehull(tracedata).HitPos
+    function PMETA:GetShootPos()
+        local offset = Vector(0, self:GetNW2Int("LeanOffset"), 0)
+        offset:Rotate(self:EyeAngles())
+        local _, result = pcall(self.old_getshootpos, self)
+        return result - offset
     end
 
-    local PLAYERMETA = FindMetaTable("Player")
-    local ENTITYMETA = FindMetaTable("Entity")
-    PLAYERMETA.oldShootPos = PLAYERMETA.oldShootPos or PLAYERMETA.GetShootPos
-    ENTITYMETA.oldEyePos = ENTITYMETA.oldEyePos or ENTITYMETA.EyePos
-
-    local GetShootPos = function(self) return PLAYERMETA.oldShootPos(self) end
-    local EyePos = function(self) return ENTITYMETA.oldEyePos(self) end
-
-    function PLAYERMETA:GetShootPos()
-        local pos, side = GetShootPos(self), self:GetNW2Int("LeanOffset", 0)
-        if side == 0 then return pos end
-        local off = Vector(0, 0, 0)
-        off.y = -side
-        off:Rotate(self:EyeAngles())
-        return checkobstacle(pos, pos + off, self)
-    end
-
-    function ENTITYMETA:EyePos()
-        local pos, side = EyePos(self), self:GetNW2Int("LeanOffset", 0)
-        if side == 0 then return pos end
-        local off = Vector(0, 0, 0)
-        off.y = -side
-        off:Rotate(self:EyeAngles())
-        return checkobstacle(pos, pos + off, self)
+    function PMETA:EyePos()
+        local offset = Vector(0, self:GetNW2Int("LeanOffset"), 0)
+        offset:Rotate(self:EyeAngles())
+        local _, result = pcall(self.old_eyepos, self)
+        return result - offset
     end
 end
 

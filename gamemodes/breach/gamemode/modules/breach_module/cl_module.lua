@@ -2669,6 +2669,7 @@ concommand.Add( "br_weapon_info", function( ply, cmd, args )
 		if wep.DamageMult then print( "Weapon final damage: "..wep.Damage ) end
 	end
 end )
+
 gamestarted = gamestarted || false
 cltime = cltime || 0
 drawinfodelete = drawinfodelete || 0
@@ -2677,11 +2678,18 @@ drawendmsg = drawendmsg || nil
 timefromround = timefromround || 0
 
 timer.Create("HeartbeatSound", 2, 0, function()
-	if not LocalPlayer().Alive then return end
-	if LocalPlayer():Alive() and LocalPlayer():GTeam() != TEAM_SPEC and LocalPlayer():GTeam() != TEAM_SCP then
-		if LocalPlayer():Health() < 30 then
-			LocalPlayer():EmitSound("heartbeat.ogg")
-		end
+	if !IsValid(LocalPlayer()) then
+		return
+	end
+
+	local ply = LocalPlayer()
+	local alive = ply:Alive()
+	local gteam = ply:GTeam()
+
+	if !alive then return end
+
+	if alive and gteam != TEAM_SPEC and gteam != TEAM_SCP and ply:Health() < 30 then
+		ply:EmitSound("heartbeat.ogg")
 	end
 end)
 

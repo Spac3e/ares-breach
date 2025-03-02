@@ -15,7 +15,7 @@ end
 
 local starttime = SysTime()
 
-BREACH.Version = "1.2.1"
+BREACH.Version = "1.2.4"
 
 TEAM_SCP = 1
 TEAM_GUARD = 2

@@ -15,30 +15,38 @@ do
     end
 end
 
-function BREACH.CreateFont(name, font, size, dataoverride, scale)
-    local fontdata = {
-        font = font,
-        size = (scale ~= false) and BREACH.ScreenScale(size) or size,
-        weight = size * 20,
-        extended = true,
-    }
+do
+    BREACH.Fonts = {}
 
-    if dataoverride then
-        table_Merge(fontdata, dataoverride)
+    function BREACH.CreateFont(name, font, size, override, scale)
+        if BREACH.Fonts[name] then
+            return name
+        end
+
+        local data = {
+            font = font,
+            size = (scale ~= false) and BREACH.ScreenScale(size) or size,
+            weight = size * 20,
+            extended = true,
+        }
+
+        if override then
+            table_Merge(data, override)
+        end
+
+        BREACH.Fonts[name] = data
+
+        surface_CreateFont(name, data)
     end
 
-    surface_CreateFont(name, fontdata)
-end
-
-if not BREACH.FontsCreated then
-    local lorimer, bauhausru, univeres, lztext, segoui, segouibold, conduit, arial = "Lorimer No 2 Stencil", "Bauhaus LT(RUS BY LYAJKA)", "Univers LT Std 47 Cn Lt", "lztextinfo(RUS BY LYAJKA)", "Segoe UI", "Segoe UI Bold", "Conduit ITC", "Arial"
+    local lorimer, bauhausru, univeres, lztext, segoui, segouibold, conduit, arial, radiofont, exo, trebuchet24, bombard, impact, verdana, righteous, littlemerry = "Lorimer No 2 Stencil", "Bauhaus LT(RUS BY LYAJKA)", "Univers LT Std 47 Cn Lt", "lztextinfo(RUS BY LYAJKA)", "Segoe UI", "Segoe UI Bold", "Conduit ITC", "Arial", "brradiofont", "Exo", "Trebuchet24", "B52", "Impact", "Verdana", "Righteous", "LittleMerry"
 
     BREACH.CreateFont("BudgetNewMini", arial, 16, {
         weight = 100,
         scanlines = 0
     })
 
-    BREACH.CreateFont("TimeMisterFreeman", "B52", 24, {
+    BREACH.CreateFont("TimeMisterFreeman", bombard, 24, {
         antialias = true,
         shadow = false
     })
@@ -76,12 +84,12 @@ if not BREACH.FontsCreated then
         antialias = true
     })
 
-    BREACH.CreateFont("Buba3", "Righteous", 30, {
+    BREACH.CreateFont("Buba3", righteous, 30, {
         weight = 400,
         antialias = true
     })
 
-    BREACH.CreateFont("Buba2", "LittleMerry", 48, {
+    BREACH.CreateFont("Buba2", littlemerry, 48, {
         weight = 800,
         shadow = true,
         antialias = true
@@ -92,7 +100,7 @@ if not BREACH.FontsCreated then
         antialias = true
     })
 
-    BREACH.CreateFont("UiBold", "Verdana", 16, {
+    BREACH.CreateFont("UiBold", verdana, 16, {
         weight = 800,
         antialias = true
     })
@@ -218,20 +226,14 @@ if not BREACH.FontsCreated then
         antialias = true,
     })
 
-    BREACH.CreateFont("ImpactBig", "Impact", 45, {
+    BREACH.CreateFont("ImpactBig", impact, 45, {
         scanlines = 3,
         weight = 700
     })
 
-    BREACH.CreateFont("ImpactSmall", "Impact", 30, {
+    BREACH.CreateFont("ImpactSmall", impact, 30, {
         scanlines = 3,
         weight = 700
-    })
-
-    BREACH.CreateFont("RadioFont", "Impact", 26, {
-        weight = 7000,
-        scanlines = 2,
-        antialias = true
     })
 
     BREACH.CreateFont("dev_desc", univeres, 16, {
@@ -374,7 +376,13 @@ if not BREACH.FontsCreated then
         antialias = true,
     })
 
-    BREACH.CreateFont("TimeLeft", "Trebuchet24", 24, {
+    BREACH.CreateFont("RadioOFFONFont", radiofont, 36, {
+        extended = true,
+        antialias = true,
+		weight = 200,
+    })
+
+    BREACH.CreateFont("TimeLeft", trebuchet24, 24, {
         weight = 800
     })
 
@@ -394,6 +402,14 @@ if not BREACH.FontsCreated then
         outline = false,
     })
 
+    BREACH.CreateFont("bauhaus_17", bauhausru, 17, {
+        weight = 500,
+        antialias = true,
+        extended = true,
+        shadow = false,
+        outline = false,
+    })
+
     BREACH.CreateFont("bauhaus_18", bauhausru, 18, {
         weight = 500,
         antialias = true,
@@ -402,10 +418,16 @@ if not BREACH.FontsCreated then
         outline = false,
     })
 
-    BREACH.CreateFont("exo_16", "Exo", 16, {
+    BREACH.CreateFont("bauhaus_22", bauhausru, 22, {
+        weight = 500,
+        antialias = true,
+        extended = true,
+        shadow = false,
+        outline = false,
+    })
+
+    BREACH.CreateFont("exo_16", exo, 16, {
         weight = 600,
         extended = true,
     })
 end
-
-BREACH.FontsCreated = true

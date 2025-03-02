@@ -147,9 +147,9 @@ net.Receive("ClientPlayMusic", StartMusic)
 net.Receive("ClientStopMusic", StopMusic)
 
 concommand.Add("debug_music_test", function() BREACH.Music:Play(BR_MUSIC_FBI_AGENTS_ESCAPE) end)
+
 function BREACH.Music:ShouldMusicPlayAtTheMoment()
-    local isPlaying = self.StartAt and self._endAt and self.CurrentMusic and (SysTime() - self.StartAt) < self._endAt
-    return isPlaying or self.IsFading
+    return (self.CurrentMusic and self.StartAt and self._endAt and (SysTime() - self.StartAt) < self._endAt) or self.IsFading
 end
 
 function BREACH.Music:CanPlayGenericMusic()
@@ -174,29 +174,33 @@ function BREACH.Music:ShouldPlayAction()
 end
 
 local generic_cd = 60
+
 function BREACH.Music:PickGenericSong()
-    if self:ShouldMusicPlayAtTheMoment() then return end
-    if self:GetVolume("ambience") == 0 then return end
-    if not self:CanPlayGenericMusic() then return end
-    if not self.NextGeneric then self.NextGeneric = 0 end
+    if self:ShouldMusicPlayAtTheMoment() or self:GetVolume("ambience") == 0 or not self:CanPlayGenericMusic() or self._mustplayafter or self.NoAutoMusic then
+        return
+    end
+
+    self.NextGeneric = self.NextGeneric or 0
     if self.NextGeneric >= SysTime() then return end
-    if self._mustplayafter then return end
-    if self.NoAutoMusic == true then return end
+
     local client = LocalPlayer()
-    if not preparing then
-        if client:GetInDimension() then
-            self:Play(BR_MUSIC_DIMENSION_SCP106)
-        elseif client:IsLZ() then
-            self:Play(BR_MUSIC_AMBIENT_LZ)
-        elseif client:IsEntrance() then
-            self:Play(BR_MUSIC_AMBIENT_OFFICE)
-        elseif client:IsHardZone() then
-            self:Play(BR_MUSIC_AMBIENT_HZ)
-        elseif client:Outside() then
-            self:Play(BR_MUSIC_AMBIENT_OUTSIDE)
-        else
-            self:Play(BR_MUSIC_AMBIENT_LZ)
-        end
+    if not IsValid(client) then return end
+
+    local track
+    if client:GetInDimension() then
+        track = BR_MUSIC_DIMENSION_SCP106
+    elseif client:IsLZ() then
+        track = BR_MUSIC_AMBIENT_LZ
+    elseif client:IsEntrance() then
+        track = BR_MUSIC_AMBIENT_OFFICE
+    elseif client:IsHardZone() then
+        track = BR_MUSIC_AMBIENT_HZ
+    elseif client:Outside() then
+        track = BR_MUSIC_AMBIENT_OUTSIDE
+    end
+
+    if track then
+        self:Play(track)
     end
 
     self.NextGeneric = SysTime() + generic_cd
@@ -220,54 +224,43 @@ end
 
 function BREACH.Music:Think()
     local client = LocalPlayer()
-    if self._endAt and self.ActualStartAt and (SysTime() - self.ActualStartAt) >= self._endAt then self:Stop(self.fade) end
+
+    if self._endAt and self.ActualStartAt and (SysTime() - self.ActualStartAt) >= self._endAt then
+        self:Stop(self.fade)
+    end
+
     if self._queue then
         local m_tab = music_table[self._queue]
-        if self.MusicPatch and self.MusicPatch:IsValid() then self.MusicPatch:Stop() end
-        local snd = m_tab.soundname
-        if self._pickedalreadysong then
-            snd = self._pickedalreadysong
-        else
-            if istable(snd) then snd = snd[math.random(#snd)] end
-            self._pickedalreadysong = snd
+        if self.MusicPatch and self.MusicPatch:IsValid() then
+            self.MusicPatch:Stop()
         end
+
+        local snd = self._pickedalreadysong or (istable(m_tab.soundname) and m_tab.soundname[math.random(#m_tab.soundname)] or m_tab.soundname)
+        self._pickedalreadysong = snd
 
         local filename = string.GetFileFromFilename(snd)
-        if self.Custom_Volumes[filename] then
-            self.AudioVolume = self.Custom_Volumes[filename]
-        else
-            self.AudioVolume = 1
-        end
+        self.AudioVolume = self.Custom_Volumes[filename] or 1
 
-        sound.PlayFile(snd, "noplay", function(music, errCode, errStr)
+        sound.PlayFile(snd, "noplay", function(music)
             if IsValid(music) and not self.music_created then
                 self.music_created = true
                 music:SetVolume(self:GetVolume(m_tab.volumetype) * self.GlobalVolume * self.AudioVolume)
                 music:SetTime(self._time)
                 self.CurrentMusic = m_tab
                 self.MusicDuration = music:GetLength()
+
                 if self._mustplayafter then
-                    local tract = self._mustplayafter
-                    local dur = self.MusicDuration
-                    local start = self.StartAt
                     timer.Create("Music_PlayAfter", 0, 0, function()
-                        if tract and SysTime() >= start + dur - FrameTime() then
+                        if SysTime() >= self.StartAt + self.MusicDuration - FrameTime() then
                             timer.Remove("Music_PlayAfter")
                             self.NextGeneric = SysTime() + generic_cd
-                            self:Play(tract)
+                            self:Play(self._mustplayafter)
                         end
                     end)
                 end
 
-                if m_tab.IsPercentEndAt then self._endAt = self.MusicDuration * m_tab.EndAt end
-                if not self._endAt then
-                    if self._loop then
-                        music:EnableLooping(true)
-                        self._endAt = math.huge
-                    else
-                        self._endAt = self.MusicDuration
-                    end
-                end
+                self._endAt = m_tab.IsPercentEndAt and self.MusicDuration * m_tab.EndAt or (self._loop and math.huge or self.MusicDuration)
+                music:EnableLooping(self._loop or false)
 
                 self.MusicPatch = music
                 music:Play()
@@ -278,29 +271,29 @@ function BREACH.Music:Think()
         self._queue = nil
     end
 
-    if self.MusicPatch and self.MusicPatch:IsValid() and self.CurrentMusic then self.MusicPatch:SetVolume(self:GetVolume(self.CurrentMusic.volumetype) * self.GlobalVolume * self.AudioVolume) end
+    if self.MusicPatch and self.MusicPatch:IsValid() and self.CurrentMusic then
+        self.MusicPatch:SetVolume(self:GetVolume(self.CurrentMusic.volumetype) * self.GlobalVolume * self.AudioVolume)
+    end
+
     if not self.NoAutoMusic then self:PickGenericSong() end
     if NextSeeSCPs > CurTime() then return end
     if action_banned[client:GTeam()] or GetGlobalBool("Evacuation", false) or client:Health() <= 0 then return end
-    for _, v in ipairs(ents.FindInSphere(client:GetPos(), 550)) do
-        if not v:IsPlayer() then continue end
-        if v == client or v:GetNoDraw() or not v:GetModel():find("/scp/") then continue end
-        if v:GetRoleName() == SCP999 then continue end
-        if v:GTeam() ~= TEAM_SCP then continue end
-        local tr = util.TraceLine({
-            start = client:EyePos(),
-            endpos = v:EyePos(),
-            filter = {client, v}
-        })
 
-        if tr.Fraction ~= 1 then continue end
-        local aim_vector = client:GetAimVector()
-        local ent_vector = v:GetPos() - client:GetShootPos()
-        if aim_vector:Dot(ent_vector) / ent_vector:Length() > .5235987755983 then -- math.pi / 6 ( 30 degrees )
-            surface.PlaySound("nextoren/charactersounds/panic.mp3")
-            self:PickActionSong()
-            NextSeeSCPs = CurTime() + math.random(30, 40)
-            break
+    local minDotProduct = 0.5235987755983
+
+    for _, v in ipairs(ents.FindInSphere(client:GetPos(), 550)) do
+        if v:IsPlayer() and v ~= client and not v:GetNoDraw() and v:GetModel():find("/scp/") and v:GetRoleName() ~= SCP999 and v:GTeam() == TEAM_SCP then
+            local tr = util.TraceLine({ start = client:EyePos(), endpos = v:EyePos(), filter = {client, v} })
+            if tr.Fraction == 1 then
+                local aim_vector = client:GetAimVector()
+                local ent_vector = (v:GetPos() - client:GetShootPos()):GetNormalized()
+                if aim_vector:Dot(ent_vector) > minDotProduct then
+                    surface.PlaySound("nextoren/charactersounds/panic.mp3")
+                    self:PickActionSong()
+                    NextSeeSCPs = CurTime() + math.random(30, 40)
+                    break
+                end
+            end
         end
     end
 end

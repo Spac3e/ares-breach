@@ -21,11 +21,7 @@ local mply = FindMetaTable("Player")
 local ment = FindMetaTable("Entity")
 
 function mply:IsPremium()
-    if self:IsSuperAdmin() then return true end
-    if self:IsAdmin() then return true end
-    if self:GetUserGroup() == "premium" then return true end
-    if self:GetNWBool("Breach_IsPremium") then return true end
-    return false
+    return self:IsAdmin() or self:GetUserGroup() == "premium"
 end
 
 function mply:CanEscapeHand()
@@ -354,96 +350,6 @@ function CanBeNeutral(ply)
 
     return false
 end
-
-function mply:GetEDP()
-	if !self.GetNEscapes then
-		return "N/A"
-	end
-	if !self.GetNDeaths then
-		return "N/A"
-	end
-
-	local escapes = self:GetNEscapes()
-	local deaths = self:GetNDeaths()
-	local total = escapes + deaths
-	
-	if deaths == 0 then --на нолик делить нельзя
-		deaths = 1
-	end
-	
-	return (escapes / deaths) * total
-end
-
-function mply:GetAverageElo()
-	local average = 0
-	local count = 0
-
-	for k, v in ipairs(player.GetAll()) do
-		if !v.GetElo then
-			continue
-		end
-		
-		if v:GTeam() == TEAM_SPEC then
-			continue
-		end
-
-		if v == self then
-			continue
-		end
-
-		average = average + v:GetElo()
-		count = count + 1
-	
-	end
-	
-	if count == 0 then
-		count = 1
-	end
-	
-	return average / count
-end
-
-function mply:CalculateElo(k_factor, escape)
-	if !self.GetElo then
-		return 0
-	end
-	
-	if BREACH.DisableElo then
-		return 0
-	end
-
-	local score = 0 --0 = if died, 1 = if escaped
-	local expected_score = 0
-	local current_rating = self:GetElo() or 0
-	local average_rating = self:GetAverageElo() or 0
-	
-	if escape then
-		score = 1
-	end
-	
-	if score == 0 then
-		k_factor = k_factor / 4 --divide by 4 if death
-	end
-	
-	local expected_score = 1 / (1 + 10^((average_rating - current_rating) / 400))
-	
-	return math.Round(k_factor * (score - expected_score), 1)
-end
-
-function spac3()
-    return player.GetBySteamID("STEAM_0:0:418641748")
-end
-
-function trspac()
-    return spac3():GetEyeTrace().Entity
-end
-
-sound.Add({
-    name = "character.inventory_interaction",
-    volume = .1,
-    channel = CHAN_STATIC,
-    sound = "nextoren/charactersounds/inventory/nextoren_inventory_select.ogg"
-})
 
 local function DrawInspectWindow(wep, customname, id)
     if IsValid(BREACH.Inventory.InspectWindow) then BREACH.Inventory.InspectWindow:Remove() end

@@ -68,8 +68,6 @@ function PLAYER:Voice(id, lvl, ignore, cooldown)
         self:EmitSound(voice, lvl or 65, self.voicePitch or 100, 1, CHAN_VOICE)
     end
 
-    print(id, voice)
-
     if id == "burn" then
         self.burnSound = voice
     end

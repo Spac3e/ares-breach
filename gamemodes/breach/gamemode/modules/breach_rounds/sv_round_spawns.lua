@@ -2,7 +2,7 @@ BREACH.Round = BREACH.Round or {}
 
 local function RandomItem(list)
     if #list == 0 then return nil end
-    
+
     local totalWeight = 0
 
     for _, item in ipairs(list) do
@@ -247,30 +247,30 @@ function BREACH.Round.SpawnLoot()
 
     local function TemporaryEntitySpawn(tbl, spawn)
         local spawncount = {}
-    
+
         for _, entdata in ipairs(tbl) do
             spawncount[entdata.class] = 0
         end
-    
+
         for _, pos in ipairs(spawn) do
             local entdata = tbl[math.random(#tbl)]
-    
+
             if math.random() <= entdata.chance and spawncount[entdata.class] < (entdata.max) then
                 local ent = ents.Create(entdata.class)
                 ent:SetPos(pos)
                 ent:Spawn()
-    
+
                 spawncount[entdata.class] = spawncount[entdata.class] + 1
             end
         end
     end
-    
+
     local dragocennostiyopta = {
         {class = "hand_key", chance = 0.6, max = 1},
         {class = "item_keys", chance = 0.4, max = 2},
         {class = "item_chaos_radio", chance = 0.3, max = 1}
     }
-    
+
     local spawnposyopta = {
         Vector(-107.30149841309, 2475.0849609375, 30.031248092651),
         Vector(-106.29196929932, 2484.3715820313, 50.03125),

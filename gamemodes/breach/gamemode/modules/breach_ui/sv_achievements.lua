@@ -45,8 +45,9 @@ BreachAchievements.AchievementTable = {
 function BreachAchievements.InitDatabase()
     BREACH.DataBaseSystem:Query([[
         CREATE TABLE IF NOT EXISTS `achievements` (
-        `id` bigint(20) NOT NULL,
-        `achievements` text DEFAULT ''
+            `id` BIGINT(20) NOT NULL,
+            `achievements` TEXT NOT NULL,
+            PRIMARY KEY (`id`)
         );
     ]])
 end

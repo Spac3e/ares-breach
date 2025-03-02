@@ -943,7 +943,7 @@ FOOTSTEP_SOUNDTIME = {
 }
 
 function GM:PlayerFootstep(ply)
-	return true 
+	return true
 end
 
 local vectorLength2D = FindMetaTable("Vector").Length2D

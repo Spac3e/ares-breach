@@ -57,9 +57,6 @@ function BREACH.DataBaseSystem:LoadPlayer(ply, callback)
         end
     end)
     
-    ply:SetElo(tonumber(ply:GetPData("breach_elo", 0)))
-	ply:SetNEscapes(tonumber(ply:GetPData("breach_escapes", 0)))
-	ply:SetNDeaths(tonumber(ply:GetPData("breach_deaths", 0)))
 	ply:SetPenaltyAmount( tonumber( ply:GetPData( "breach_penalty", 0 ) ) )
 
 	if callback and isfunction(callback) then

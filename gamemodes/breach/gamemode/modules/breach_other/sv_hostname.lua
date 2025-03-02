@@ -1,5 +1,5 @@
 local basename = "Ares Project: SCP Foundation [BREACH]"
-local version = "Beta 1.0"
+local version = "Beta " .. BREACH.Version
 
 local emojitable = {
     "🧪 ",

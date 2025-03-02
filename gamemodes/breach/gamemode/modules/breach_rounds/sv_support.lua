@@ -473,7 +473,7 @@ function SetupSupportSpawn()
             elseif SUPPORTTABLE["goc"] and SUPPORTTABLE["goc"] != false then
                 SUPPORTTABLE["goc"] = false
             elseif SUPPORTTABLE["fbi"] and SUPPORTTABLE["fbi"] != false then
-                SUPPORTTABLE["fbi"] = false           
+                SUPPORTTABLE["fbi"] = false
             end
 
 			SupportSpawn()

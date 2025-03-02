@@ -131,7 +131,7 @@ local function WaitingForPlayers()
 			if gteam != TEAM_SPEC then
 				padding = BREACH.ScreenScale(ScrW()) + 87
 			end
-	
+
             draw.SimpleText(countdown_text, "ScoreboardContent", padding, y_waiting, ColorAlpha(color_white, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 			alpha_ready = math.abs(math.sin(CurTime() * 2)) * 50 + 205
 			draw.SimpleText("Ready to play", "ScoreboardContent", padding, y_needed, ColorAlpha(color_white, alpha_ready), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)	

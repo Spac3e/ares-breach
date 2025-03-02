@@ -6,12 +6,12 @@ local ownerkey = 'Owner'
 function WEAPON:__index(key)
     local val = WEAPON[key]
     if val ~= nil then return val end
-    local val = ENTITY[key]
+    val = ENTITY[key]
     if val ~= nil then return val end
     local tab = GetTable(self)
 
     if tab ~= nil then
-        local val = tab[key]
+        val = tab[key]
         if val ~= nil then return val end
     end
 

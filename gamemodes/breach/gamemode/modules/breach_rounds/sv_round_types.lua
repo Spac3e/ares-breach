@@ -49,6 +49,8 @@ local function SetupRoundTimers()
 
     local Event = RoundEvent
 
+	EscapeTimer()
+
     if biground then
 		Event("MTFDoor", 30, OpenMTFDoor)
         Event("SecurityDoor", 50, OpenSecurityDoor)
@@ -135,8 +137,6 @@ local function SetupRoundTimers()
 		Event("EvacuationTemp", 585, PreEvacTemp)
 		Event("EvacuationTechnologies", 650, SpawnEvacuationVehicles)
 	end
-
-    timer.Create("CheckEscape", 2, 0, CheckEscape)
 end
 
 function AddRoundType( name, tab, base, chance )

@@ -333,12 +333,6 @@ function mply:StopIgniteSequence()
 	end
 end
 
-function mply:ClearBodyGroups()
-	for i = 0, self:GetNumBodyGroups() - 1 do
-		self:SetBodygroup(i, 0)
-	end
-end
-
 function GM:PlayerSpray(ply)
     return true
 end
@@ -378,7 +372,7 @@ function mply:AnimatedHeal(amount)
     local maxHealth = self:GetMaxHealth()
     local targetHealth = math.min(self:Health() + amount, maxHealth)
     local startTime = CurTime()
-    local timerName = "AnimatedHeal_" .. self:EntIndex()
+    local timerName = "AnimatedHeal_" .. self:SteamID64()
 
     if timer.Exists(timerName) then
         timer.Remove(timerName)
@@ -396,6 +390,7 @@ function mply:AnimatedHeal(amount)
         end
     end)
 end
+
 function mply:UnUseBag()
     if self:GetUsingBag() == "" then return end
     local tbl_bonemerged = ents.FindByClassAndParent("breach_bonemerge", self)
@@ -541,8 +536,10 @@ function mply:SetupNormal()
 	self.weaponfromclient = nil
 	self.IsZombie = false
 	self.recoilmultiplier = nil
+	self.MovementLocked = nil
 	self:StripWeapons()
 	self:StripAmmo()
+	self:bSendLua("LocalPlayer().cantopeninventory = nil")
 	self:SetNW2Bool("Breach:CanAttach", false)
 	self:SetUsingBag("")
 	self:SetUsingCloth("")
@@ -590,7 +587,7 @@ function mply:SetupNormal()
 	self.LeftArmResist = nil
 	self.Infected409 = nil
 	self.ScaleDamage = {}
-	
+
 	self.BaseStats = nil
 	self.UsingArmor = nil
 	self.handsmodel = nil

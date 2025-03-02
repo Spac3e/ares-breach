@@ -307,6 +307,13 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 				LootBox.HeadEnt:SetSkin( ply.HeadEnt:GetSkin() )
 			end
 
+			if (ply:GTeam() != TEAM_SCP or victim.IsZombie) then
+				local eyes = LootBox.HeadEnt:GetFlexIDByName("Eyes")
+
+				if eyes then
+					LootBox.HeadEnt:SetFlexWeight(eyes, 1)
+				end
+			end
 		end
 	end
 
@@ -316,7 +323,7 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 		end
 
 		local class = weapon:GetClass()
-			
+
 		if not LootBox.vtable.Weapons[class] then
 			LootBox.vtable.Weapons[class] = {}
 		end
@@ -324,11 +331,11 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 		if class:find("item_medkit_") then
 			table.insert(LootBox.vtable.Weapons[class], {Heal_Left = weapon.Heal_Left})
 		end
-		
+
 		if weapon:Clip1() then
 			table.insert(LootBox.vtable.Weapons[class], {ammo = weapon:Clip1()})
 		end
-			
+
 		if weapon.CW20Weapon then
 			LootBox.vtable.Weapons[class].attachments = {}
 
@@ -348,12 +355,12 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
             end
 		end
 	end
-	
+
 	if ( team == TEAM_SCP and ply.SCPTable and ply.SCPTable.DeleteRagdoll ) then
 		LootBox:Remove()
 		ply:SetNWEntity( "RagdollEntityNO", nil )
 		ply.SCPTable = nil
-	end	
+	end
 
 	if ( team == TEAM_SCP ) then
 		if ( ply:HasWeapon( "weapon_scp_049_2" ) ) then
@@ -373,7 +380,7 @@ function CreateLootBox( ply, inflictor, attacker, knockedout, dmginfo )
 	elseif ( team != TEAM_SCP ) then
 		LootBox.breachsearchable = true
 	end
-	
+
 	if ( ply:LastHitGroup() == HITGROUP_HEAD and ply.Head_Split ) then
 		ParticleEffectAttach( "blood_advisor_pierce_spray", PATTACH_POINT_FOLLOW, LootBox, 1 )
 

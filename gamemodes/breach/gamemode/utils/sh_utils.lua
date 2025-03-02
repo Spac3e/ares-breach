@@ -21,6 +21,7 @@ local player = player
 local blurScreen = Material("pp/blurscreen")
 local EMeta = FindMetaTable("Entity")
 local WMeta = FindMetaTable("Weapon")
+local PMeta = FindMetaTable("Player")
 local vec = FindMetaTable("Vector")
 
 local string_len = utf8.len
@@ -74,6 +75,10 @@ function EMeta:GetBodyGroupsString()
         curstr = curstr .. tostring(self:GetBodygroup(bg.id))
     end
     return curstr
+end
+
+function PMeta:ClearBodyGroups()
+    self:SetBodyGroups(string.rep('0', self:GetNumBodyGroups())) -- string.rep работает быстрее нумеричного метода
 end
 
 function WMeta:PlaySequence(seq_id, idle)

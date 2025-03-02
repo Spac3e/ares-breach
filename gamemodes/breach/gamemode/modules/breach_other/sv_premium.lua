@@ -4,15 +4,14 @@ PREMIUM = PREMIUM or {}
 
 if not BREACH.DataBaseSystem then return end
 
-PREMIUM.Infinite = 1067519911673
+PREMIUM.Infinite = 315532800
 PREMIUM.Day = false
-
 
 function PREMIUM.InitializePlayerDatabase()
     local query = BREACH.DataBaseSystem:Query('CREATE TABLE IF NOT EXISTS breach_premium (SteamID bigint(20) NOT NULL PRIMARY KEY, Duration BIGINT);')
 
     function query:onSuccess(data)
-        PREMIUM.AddPlayer('steamId_example', PREMIUM.Infinite)
+        PREMIUM.AddPlayer(0, 0)
     end
 
     query:start()
@@ -154,7 +153,7 @@ function PREMIUM.Think()
 end
 
 function PREMIUM:OnJoin(ply)
-    PREMIUM.FindPlayer(ply:SteamID(), function(isPremium)
+    PREMIUM.FindPlayer(ply:SteamID64(), function(isPremium)
         if not isPremium and ply:GetUserGroup() == "premium" then
             ply:DisablePremium()
         elseif isPremium and not ply:IsPremium() then

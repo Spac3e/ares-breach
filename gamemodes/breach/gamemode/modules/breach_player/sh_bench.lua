@@ -152,16 +152,3 @@ function gbench()
         calls = 1000
     }, WRAPPER)
 end
-
-/*
-local bench = gbench()
-    :SetTitle("Test bench")
-    :SetCalls(100000)
-    :SetJitDisabled(false)
-
-bench:AddFunction("Test benchJIT", function()
-
-end)
-
-bench:Start()
-*/

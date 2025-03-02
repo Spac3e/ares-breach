@@ -260,8 +260,10 @@ function GM:PlayerDeathSound(ply)
     return true
 end
 
-function GM:PlayerHurt()
-	-- дорогие друзья, эксперемент ХУЙНЯ
+function GM:PlayerHurt(ply)
+	if IsValid(ply) and timer.Exists('AnimatedHeal_' .. ply:SteamID64()) then
+		timer.Remove('AnimatedHeal_' .. ply:SteamID64())
+	end
 end
 
 function GM:OnEntityCreated( ent )
@@ -308,42 +310,44 @@ function IsDoorLocked( entity )
 end
 
 hook.Add("AcceptInput", "AutoCloseDoor", function(ent, name, activator, caller, data)
-    local idi_gulay = {228,1799,1797,1660,1661,1801,1662,1663,2157,2159,1679,1680,1711,1712}
+	if ent:CreatedByMap() then
+		local idi_gulay = {228,1799,1797,1660,1661,1801,1662,1663,2157,2159,1679,1680,1711,1712}
 
-    local timerokdayname = "дверкащаприкроется_" .. ent:EntIndex()
-    local model_gulay = {"models/next_breach/elev/elevator_b_top.mdl"}
-	local closetime = 10
+		local timerokdayname = "дверкащаприкроется_" .. ent:EntIndex()
+		local model_gulay = {"models/next_breach/elev/elevator_b_top.mdl"}
+		local closetime = 10
 
-	if ent:EntIndex() == 2814 then
-		closetime = 16
+		if ent:EntIndex() == 2814 then
+			closetime = 16
+		end
+
+		if table.HasValue(idi_gulay, ent:EntIndex()) then
+			return
+		end
+
+		if table.HasValue(model_gulay, ent:GetModel()) then
+			return
+		end
+
+		if string.find(ent:GetName(), "elev") then return end
+		if string.find(ent:GetName(), "checkpoint") then return end
+
+		if timer.Exists(timerokdayname) then
+			timer.Destroy(timerokdayname)
+		end
+
+		timer.Create(timerokdayname, closetime, 1, function()
+			if IsValid(ent) and not ent:IsPlayer() then
+				ent:Fire("close")
+				ent:SetKeyValue("Skin", 0)
+			end
+		end)
+
+		-- Вообще, весь код открытия дверей лежит в playeruse, но я бы его перенес сюда ибо из-за пинга и т.д факторов двери иногда не хотят открываться, но пусть пока что будет так
+		if DoorClasses[ent:GetClass()] and activator:IsPlayer() and !DoorIsOpen(ent) and !IsDoorLocked(ent) then
+			ChangeSkinKeypad(activator, ent, true)
+		end
 	end
-
-    if table.HasValue(idi_gulay, ent:EntIndex()) then
-        return
-    end
-
-    if table.HasValue(model_gulay, ent:GetModel()) then
-        return
-    end
-
-    if string.find(ent:GetName(), "elev") then return end
-    if string.find(ent:GetName(), "checkpoint") then return end
-
-    if timer.Exists(timerokdayname) then
-        timer.Destroy(timerokdayname)
-    end
-
-    timer.Create(timerokdayname, closetime, 1, function()
-        if IsValid(ent) and not ent:IsPlayer() then
-            ent:Fire("close")
-            ent:SetKeyValue("Skin", 0)
-        end
-    end)
- 
-	-- Вообще, весь код открытия дверей лежит в playeruse, но я бы его перенес сюда ибо из-за пинга и т.д факторов двери иногда не хотят открываться, но пусть пока что будет так
-	if DoorClasses[ent:GetClass()] and activator:IsPlayer() and !DoorIsOpen(ent) and !IsDoorLocked(ent) then
-	    ChangeSkinKeypad(activator, ent, true)
-    end
 end)
 
 local keypad_mdls = {"models/next_breach/elev/elevator_b_top.mdl","models/next_breach/elev/elevator_b_down.mdl","models/next_breach/keycard_panel.mdl","models/next_breach/hcz_keycard_panel.mdl","models/next_breach/entrance_button.mdl"}

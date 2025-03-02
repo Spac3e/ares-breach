@@ -138,10 +138,15 @@ function SetupPlayers(tab)
     end
 end
 
--- ДАЛЬШЕ ИДЁТ ПРОТИВНЫЙ МУСОР
-function CheckEscape()
-    for _, v in pairs(ents.FindInSphere(POS_UIUTUNNEL, 15)) do
-        if v:IsPlayer() and v:Alive() and v:GTeam() != TEAM_SPEC and v:GTeam() != TEAM_GOC then            
+-- ДАЛЬШЕ ИДЁТ ПРОТИВНЫЙ МУСОР, уже менее противный
+local escapes = {
+    {
+        pos = POS_UIUTUNNEL,
+        radius = 15,
+        canescape = function(v)
+            return v:GTeam() != TEAM_SPEC and v:GTeam() != TEAM_GOC and v:Alive()
+        end,
+        onescape = function(v)
             if v:GTeam() == TEAM_USA then
                 if not GetGlobalBool("Evacuation") or m_UIUCanEscape then
                     v:Evacuate()
@@ -151,11 +156,15 @@ function CheckEscape()
             elseif v:GTeam() != TEAM_USA then
                 v:Evacuate()
             end
-        end
-    end
-
-    for k, v in pairs(ents.FindInSphere(POS_UNKNOWNTUNNEL, 50)) do
-        if v:IsPlayer() and v:Alive() and v:GTeam() != TEAM_SPEC and v:CanEscapeChaosRadio() and not v.escaping then
+        end,
+    },
+    {
+        pos = POS_UNKNOWNTUNNEL,
+        radius = 50,
+        canescape = function(v)
+            return v:GTeam() != TEAM_SPEC and v:CanEscapeChaosRadio() and not v.escaping and v:Alive()
+        end,
+        onescape = function(v)
             v.escaping = true
             v:ConCommand("stopsound")
             v:Freeze(true)
@@ -167,35 +176,66 @@ function CheckEscape()
                 v:Freeze(false)
                 v.escaping = false
             end)
-        end
-    end
-
-    for k, v in pairs(ents.FindInSphere(POS_ESCAPEALL, 75)) do
-        if v:IsPlayer() and v:Alive() and v:GTeam() != TEAM_SPEC and v:CanEscapeHand() then
+        end,
+    },
+    {
+        pos = POS_ESCAPEALL,
+        radius = 75,
+        canescape = function(v)
+            return v:GTeam() != TEAM_SPEC and v:CanEscapeHand() and v:Alive()
+        end,
+        onescape = function(v)
             v:AddToStatistics("l:ending_escaped_site19", 730)
             v:Evacuate()
-        end
-    end
-
-    for k, v in pairs(ents.FindInSphere(POS_CARESCAPE, 800)) do
-        if v:IsPlayer() and v:Alive() and v:GTeam() != TEAM_SPEC and v:CanEscapeCar() and v:InVehicle() then
+        end,
+    },
+    {
+        pos = POS_CARESCAPE,
+        radius = 800,
+        canescape = function(v)
+            return v:GTeam() != TEAM_SPEC and v:CanEscapeCar() and v:InVehicle() and v:Alive()
+        end,
+        onescape = function(v)
             v:ExitVehicle()
             v:AddToStatistics("l:ending_car", 900)
             timer.Simple(0.1, function()
                 v:Evacuate()
             end)
-        end
-        if v:GetModel() == "models/scpcars/scpp_wrangler_fnf.mdl" then
-            v:Remove()
+        end,
+    },
+    {
+        pos = POS_O5EXIT,
+        radius = 225,
+        canescape = function(v)
+            return v:GTeam() != TEAM_SPEC and v:CanEscapeO5() and v:Alive()
+        end,
+        onescape = function(v)
+            v:AddToStatistics("l:ending_o5", 840)
+            v:Evacuate()
+        end,
+    },
+}
+
+function CheckEscape()
+    for _, escape in ipairs(escapes) do
+        for _, v in pairs(ents.FindInSphere(escape.pos or vector_origin, escape.radius)) do
+            if v:IsPlayer() and v:Alive() and escape.canescape(v) then
+                escape.onescape(v)
+
+                hook.Run("PlayerEscaped", v, escape)
+            end
         end
     end
 
-    for k, v in pairs(ents.FindInSphere(POS_O5EXIT, 225)) do
-        if v:IsPlayer() and v:Alive() and v:GTeam() != TEAM_SPEC and v:CanEscapeO5() then
-            v:AddToStatistics("l:ending_o5", 840)
-            v:Evacuate()
+    for _, car in pairs(ents.FindInSphere(POS_CARESCAPE, 800)) do
+        if car:GetModel() == "models/scpcars/scpp_wrangler_fnf.mdl" then
+            car:Remove()
         end
     end
+end
+
+function EscapeTimer()
+    timer.Create("CheckEscape", 2, 0, CheckEscape)
 end
 
 function BREACH.Round.OpenDblock()
